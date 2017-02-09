@@ -1,0 +1,315 @@
+
+
+button.content_common_btn {
+	font-size: 0.75em;
+	margin: 1em auto;
+}
+
+.cover_sub h2 {
+	font-size: 3vw;
+}
+
+select.date {
+	font-size: 2vw;
+	vertical-align: text-bottom;
+}
+
+.content_cover_sub_head_left {
+	display: inline-block;
+	position: absolute;  
+	margin-left: 5%;
+	font-size: 3vw;
+	top:50%;
+	transform: translateY(-50%);
+	vertical-align: middle;
+}
+
+.content_cover_sub_head_middle {
+	display: inline-block;
+	position: absolute;  
+	font-size: 2.5vw;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	vertical-align: middle;
+}
+
+.content_cover_sub_head_right {
+	display: inline-block;
+	position: absolute;  
+	margin-left: 75%;
+	font-size: 2.5vw;
+	top:50%;
+	transform: translateY(-50%);
+	vertical-align: middle;
+}
+
+.content_cover_sub_bottom_left {
+	display: inline-block;
+	position: absolute;  
+	margin-left: 20%;
+	font-size: 3vw;
+	top:50%;
+	transform: translateY(-50%);
+	vertical-align: middle;
+}
+
+.content_cover_sub_bottom_right {
+	display: inline-block;
+	position: absolute;  
+	margin-left: 60%;
+	font-size: 3vw;
+	top:50%;
+	transform: translateY(-50%);
+	vertical-align: middle;
+}
+
+/* head */
+#div_headmenu {
+	position: absolute;
+	min-width: 300px;
+	right: 1em;
+	top: 2em;
+}
+
+#hello {
+	display: inline-block;
+	vertical-align: middle;
+	text-align: right;
+	font-size: 1.5em;
+	max-width: 180px;
+	text-overflow:ellipsis;
+	border-width: 0;
+	background: transparent;
+}
+
+#home {
+	vertical-align: middle;
+	margin-left: 10px;
+	max-width: 100px;
+}
+
+/* query */
+button.query_btn {
+	font-size: 1em;
+	margin: 2em auto;
+}
+
+.div_block {
+	border: 1px solid;
+	border-color: #c6c6c6 #969696 #555555 #969696;
+}
+
+#div_query {
+	float: left;
+	clear: both;
+	width: 100%;
+	margin-top: 1em;
+}
+
+#query_account {
+	margin-right: 5%;
+}
+
+#query_year {
+	margin-right: 2%;
+}
+
+#query_month {
+	margin-right: 5%;
+}
+
+/* plans */
+#div_plans {
+	float: right;
+	width: 100%;
+	margin-top: 1em;
+}
+
+.div_sub {
+	margin: 1em;
+}
+
+#plans_name {
+	font-size: 1.5em;
+	font-weight: bold;
+	text-shadow: 0 0 0.05em rgba(0, 0, 0, 1);
+}
+
+#plans {
+	width: 100%;
+}
+
+/* modify plan */
+.div_plans_sub {
+	min-height: 369px;
+	min-width: 615px;
+
+	width: 80vw;
+	height: 48vw;
+}
+
+
+.div_plans_head {
+	position: relative;
+	width: 100%; 
+	height: 9%;
+	margin-top: 1%;
+	/*vertical-align: bottom;*/
+}
+
+.plan_hr {
+	margin: 0 5%;
+	border-style: dashed;
+}
+
+.plan_scroll {
+	overflow: auto;
+	height: 65%; 
+	width: 90%;
+	margin-top: 1%;
+	margin-bottom: 1%;
+}
+
+.plan_table {
+	width: 100%;
+	font-size: 2.5vw;
+	border-spacing: 1vw 2vw;
+	table-layout: fixed;
+	text-overflow: ellipsis;
+}
+
+/*.text_td {
+    word-break:keep-all;
+    white-space:nowrap;
+	overflow:hidden;
+	text-overflow:ellipsis;
+}*/
+
+.plan_btn {
+	font-size: 1vw;
+}
+
+.plan_big_btn {
+	font-size: 2vw;
+}
+
+.plans_bottom {
+	position: relative;
+	width: 100%; 
+	height: 10%;
+	margin-top: 3%;
+}
+
+.opt_input {
+	display: block;
+	font-size: 2.5vw;
+
+    border-right: #ffffff 0px solid;
+    border-top: #ffffff 0px solid;
+    border-left: #ffffff 0px solid;
+    border-bottom: #c0c0c0 1px solid;
+	background: transparent;
+
+    padding : 0;
+}
+
+/* check in */
+
+.check_in_box {
+	width: 2.5vw;
+	height: 2.5vw;
+}
+
+#all_selected {
+	vertical-align: bottom;
+}
+
+/* record */
+#div_record {
+	float: left;
+	clear: both;
+	width: 100%;
+	margin-top: 1em;
+}
+
+.records {
+	width: 100%;
+	border: 1px solid blue;
+	border-collapse:collapse;
+	color: red;
+}
+
+@media screen and (min-width: 1024px) {
+
+	#div_query {
+		width: 70%;
+	}
+
+	#div_plans {
+		position: fixed;
+		width: 29%;
+		right: 0;
+	}
+
+	#div_record {
+		width: 70%;
+	}
+}
+
+
+@media screen and (max-width: 768px) {
+	#div_headmenu {
+		left: 468px;
+	}
+
+	.cover_sub h2 {
+		font-size: 23px;
+	}
+
+	select.date {
+		font-size: 15.36px;
+	}
+
+	.content_cover_sub_head_left {
+		font-size: 23px;
+	}
+
+	.content_cover_sub_head_middle {
+		font-size: 19.2px;
+	}
+
+	.content_cover_sub_head_right {
+		font-size: 19.2px;
+	}
+
+	.content_cover_sub_bottom_left {
+		font-size: 23px;
+	}
+
+	.content_cover_sub_bottom_right {
+		font-size: 23px;
+	}
+
+	.plan_table {
+		font-size: 19.2px;
+		border-spacing: 7.68px 15.36px;
+	}
+
+	.plan_btn {
+		font-size: 7.68px;
+	}
+
+	.plan_big_btn {
+		font-size: 15.36px;
+	}
+
+	.opt_input {
+		font-size: 19.2px;
+	}
+
+	.check_in_box {
+		width: 19.2px;
+		height: 19.2px;
+	}
+}

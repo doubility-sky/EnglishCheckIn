@@ -1,0 +1,160 @@
+*{
+	margin: 0;
+	padding: 0;
+}
+html, body {
+	height:100%;
+}
+
+body, button, input, span {
+	font-family: "Lucida Grande", Helvetica, Arial, "Lucida Sans Unicode", 'Microsoft YaHei','WenQuanYi Micro Hei', sans-serif;
+}
+
+body {
+	min-width: 768px;
+	background: -moz-linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.3) 70%, rgba(62, 201, 79, 0.9));
+	background: -webkit-linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.3) 70%, rgba(62, 201, 79, 0.9));
+	background: -o-linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.3) 70%, rgba(62, 201, 79, 0.9));
+	background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.3) 70%, rgba(62, 201, 79, 0.9));
+	background-attachment:fixed;
+}
+
+hr {
+	border: 0.1em solid #444444;
+	box-shadow: 0px 3px 5px #888888;
+}
+
+button {
+	border-width: 0;
+	background-color: rgba(0,0,0,0);
+	color: rgba(90, 90, 209, 1);
+}
+
+button:active {
+	color: rgba(90, 90, 209, 0.5);
+
+}
+
+button, input:focus {
+	outline: 0;
+}
+
+button > span {
+	font-size: 2em;
+	vertical-align: top;
+	white-space: pre;
+}
+
+a {
+	text-decoration:none;
+}
+
+select {
+	-webkit-appearance: menulist-button;
+}
+
+.center {
+	text-align:center;
+	margin: 0 auto;
+}
+
+.left {
+	text-align:left;
+	margin: 0 auto;
+}
+
+.right {
+	text-align:right;
+	margin: 0 auto;
+}
+
+.main {
+	_height: 100%;
+	min-height: 100%;
+}
+
+.content {
+	padding-bottom: 3.5em;
+}
+
+.header {
+
+}
+
+.header img {
+	vertical-align: middle;
+	margin: 0 1em;
+}
+
+.header h1 {
+	vertical-align: middle;
+	display: inline;
+	font-weight: bold;
+	font-size: 3em;
+	text-shadow: 0.05em 0.05em 0.1em rgba(0, 0, 0, 0.5);
+}
+
+.footer {
+	width: 100%;
+	height: 3em;
+	margin-top: -3em;
+}
+
+.big {
+	transform-origin: 0 0;
+	-ms-transform-origin: 0 0;
+	-webkit-transform-origin: 0 0;
+	-o-transform-origin: 0 0;
+	-moz-transform-origin: 0 0;
+
+	transform: scale(1.5, 1.5);
+	-ms-transform: scale(1.5, 1.5);
+	-moz-transform: scale(1.5, 1.5);
+	-webkit-transform: scale(1.5, 1.5);
+	-o-transform: scale(1.5, 1.5);
+
+	width: 66.5%;
+}
+
+.small {
+	transform-origin: 0 0;
+	-ms-transform-origin: 0 0;
+	-webkit-transform-origin: 0 0;
+	-o-transform-origin: 0 0;
+	-moz-transform-origin: 0 0;
+
+	transform: scale(0.667, 0.667);
+	-ms-transform: scale(0.667, 0.667);
+	-moz-transform: scale(0.667, 0.667);
+	-webkit-transform: scale(0.667, 0.667);
+	-o-transform: scale(0.667, 0.667);
+
+	width: 150%;
+}
+
+.cover {
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(255,255,255,0.6);
+	top: 0;
+	left: 0;
+	z-index: 1;
+	margin: auto; top: 0; left: 0; bottom: 0; right: 0;
+}
+
+.cover_sub {
+	position: absolute;
+
+	margin:auto;
+	top: 0; 
+	right: 0; 
+	left: 0;
+	bottom: 0;
+
+	background: -moz-linear-gradient(#eceee0 30%, #c9d674);
+	background: -webkit-linear-gradient(#eceee0 30%, #c9d674);
+	background: -o-linear-gradient(#eceee0 30%, #c9d674);
+	background: linear-gradient(#eceee0 30%, #c9d674);
+	border: 1px solid black;
+}

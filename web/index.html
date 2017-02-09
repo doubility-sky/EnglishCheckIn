@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>English Check-in System</title>
+
+	<meta name="viewport" content="maximum-scale=1.0,user-scalable=no" />
+
+	<link rel="icon" type="image/x-icon" href="/image/favicon.ico" media="all" />
+
+	<link rel="stylesheet" type="text/css" href="/css/common.css">
+	<link rel="stylesheet" type="text/css" href="/css/login.css">
+    <link rel="stylesheet" href="/css/style.css">
+
+	<!--[if lt IE 9]>
+		<script src="/scripts/html5shiv.min.js"></script>
+	<![endif]-->
+
+	<script type="text/javascript" src="/scripts/login.js"></script>
+</head>
+<body>
+	<div class="main">
+		<div class="content">
+			<div hidden="hidden">
+				<img id="share_wx_logo" src="/image/big_logo.png" height="0" width="0" />
+			</div>
+
+			<div class="header big">
+				<img src="/image/middle_logo.png"/>
+				<h1>English Check-in</h1>
+				<hr class="small" style="margin-top: 1em;">
+			</div>
+
+			<div id="div_login_placeholder"></div>
+			<div class="center login">
+				<div style="margin-top: 10%">
+					<select id="login_account" >
+						<option value="0">Choose user...</option>
+						<option value ="1">Volvo</option>
+						<option value ="2">Saab</option>
+						<option value="3">Opel</option>
+						<option value="4">Audi</option>
+						<option value ="5">啊啊啊啊啊啊啊啊啊啊</option>
+					</select>
+				</div>
+				<div style="margin-top: 15%">
+					<button class="login_btn" onclick="login()">
+						<span class="icon-checkmark"></span>
+						<span> Sign in</span>
+					</button>
+					<button class="login_btn" onclick="openCreateDiv();">
+						<span class="icon-plus"></span>
+						<span> Sign up</span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="center footer">
+		<hr>
+		<p style="margin-top: 0.2em; font-size: 1.5em">Build by handsome programers in 2017</p>
+	</div>
+
+	<div class="center cover" id="div_new">
+		<div class="cover_sub" id="div_login_new">
+			<input type="text" class="center" id="new_account" name="new_account" placeholder="Enter Your Name" maxlength=10>
+			</input>
+			<button class="center create_btn" onclick="createNewAccount(document.getElementById('new_account').value);">
+				<span class="icon-plus"></span>
+				<span> Sign up</span>
+			</button>
+			<button class="center create_btn" onclick="closeCreateDiv();">
+				<span class="icon-cross"></span>
+				<span> Cancel</span>
+			</button>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>English Check-in System</title>
+    <link rel="icon" type="image/x-icon" href="/image/favicon.ico" media="all" />
+
+    <link rel="stylesheet" type="text/css" href="/css/common.css">
+    <link rel="stylesheet" type="text/css" href="/css/content.css">
+    <link rel="stylesheet" href="/css/style.css">
+
+    <!--[if lt IE 9]>
+        <script src="/scripts/html5shiv.min.js"></script>
+    <![endif]-->
+
+    <script type="text/javascript" src="/scripts/content.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="content">
+            <div class="header">
+                <img src="/image/middle_logo.png"/>
+                <h1>English Check-in</h1>
+                <hr>
+            </div>
+
+            <div id="div_headmenu">
+                <input type="text" id="hello" readonly="readonly" value="Hi!" />
+                <button id="home" onclick="gotoHome()">
+                    <span class="icon-home"></span>
+                    <span> Home</span>
+                </button>
+            </div>
+
+            <div class="div_block" id="div_query">
+                <table class="center" style="width: 90%;">
+                    <tr>
+                        <td style="width: 0%;">
+                            <select id="query_account" style="font-size: 2em;">
+                                <option value="0">All</option>
+                                <option value ="1">Volvo</option>
+                                <option value ="2">Saab</option>
+                                <option value="3">Opel</option>
+                                <option value="4">Audi</option>
+                            </select>
+                        </td>
+                        <td style="width: 50%;">
+                            <select id="query_year" style="font-size: 2em;"></select>
+                            <select id="query_month" style="font-size: 2em;"></select>
+                        </td>
+                        <td   style="width: 30%;">
+                            <button class="query_btn" onclick="createTable(16)">
+                                <span class="icon-search"></span>
+                                <span> Query  </span>
+                            </button>
+                            <a href="#" download="English_Record.csv" onclick="clickDownload(this);">
+                                <button class="query_btn" >
+                                    <span class="icon-folder-open"></span>
+                                    <span> Export  </span>
+                                </button>
+                            </a>
+                            <button class="query_btn" onclick="openCheckIn();">
+                                <span class="icon-heart"></span>
+                                <span> Check-in  </span>
+                            </button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="center div_block" id="div_plans">
+                <div class="div_sub">
+                    <table class="center" id="plans">
+                        <th>No</th>
+                        <th>Name</th>
+                        <th>Plan</th>
+                        <tr>
+                            <td>A.</td>
+                            <td>听力5篇</td>
+                            <td>每周5次</td>
+                        </tr>
+                        <tr>
+                            <td>B.</td>
+                            <td>阅读5篇</td>
+                            <td>每天</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="div_sub">
+                    <button class="content_common_btn" onclick="openOptPlans();">
+                        <span class="icon-wrench"></span>
+                        <span> Modify  </span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="center div_block" id="div_record" hidden="hidden">
+                <div class="div_sub" id="div_record_sub">
+
+                </div>
+                <a href="#" download="English_Record.csv" onclick="clickDownload(this);">
+                    <button class="content_common_btn" >
+                        <span class="icon-folder-open"></span>
+                        <span> Export  </span>
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="center footer">
+        <hr>
+        <p style="margin-top: 0.2em; font-size: 1.5em">Build by handsome programers in 2017</p>
+    </div>
+
+    <div class="center cover" id="div_opt_plans">
+        <div class="cover_sub div_plans_sub">
+            <div class="left div_plans_head">
+                <div class="content_cover_sub_head_left">
+                    <h2>Modify Plans</h2>                
+                </div>
+                <div class="content_cover_sub_head_right">
+                    <button class="plan_btn" id="add_new_plan" >
+                        <span class="icon-plus"></span>
+                        <span> New</span>
+                    </button>    
+                </div>
+            </div>
+
+            <hr class="plan_hr">
+
+            <div class="center plan_scroll">
+                <table class="center plan_table"> 
+                    <th style="width: 40%;">Name</th>
+                    <th style="width: 40%;">Plan</th>
+                    <th style="width: 20%">Operate</th>
+                    <tr>
+                        <td>听听听听听听听听听</td>
+                        <td>每周5次</td>
+                        <td>
+                            <button class="plan_btn">
+                                <span class="icon-minus"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                        <td>
+                            <button class="plan_btn">
+                                <span class="icon-minus"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                        <td>
+                            <button class="plan_btn">
+                                <span class="icon-minus"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                        <td>
+                            <button class="plan_btn">
+                                <span class="icon-minus"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                        <td>
+                            <button class="plan_btn">
+                                <span class="icon-minus"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                        <td>
+                            <button class="plan_btn">
+                                <span class="icon-minus"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="opt_input center" placeholder="e.g. 阅读5篇" maxlength="10" />
+                        </td>
+                        <td>
+                            <input type="text" class="opt_input center" placeholder="e.g. 每周5次" maxlength="10" />
+                        </td>
+                        <td>
+                            <button class="plan_btn">
+                                <span class="icon-plus"></span>
+                            </button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <hr class="plan_hr">
+
+            <div class="left plans_bottom">
+                <button class="plan_big_btn content_cover_sub_bottom_left" >
+                    <span class="icon-checkmark"></span>
+                    <span> Confirm</span>
+                </button>
+                <button class="plan_big_btn content_cover_sub_bottom_right" onclick="closeOptPlans();">
+                    <span class="icon-cross"></span>
+                    <span> Cancel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="center cover" id="div_check_in" hidden="hidden">
+        <div class="cover_sub div_plans_sub">
+            <div class="left div_plans_head">
+                <div class="content_cover_sub_head_left">
+                    <h2>Check In</h2>
+                </div>
+                <div class="content_cover_sub_head_middle">
+                    <span>2017年12月</span> 
+                    <select class="date" id="check_in_date_begin"></select>
+                    <span>-</span>
+                    <select class="date" id="check_in_date_end"></select>
+                </div>
+                <div class="content_cover_sub_head_right">
+                    <input type="checkbox" class="check_in_box" id="all_selected">All</input>         
+                </div>
+            </div>
+
+            <hr class="plan_hr">
+
+            <div class="center plan_scroll">
+                <table class="center plan_table"> 
+                    <th style="width: 20%">Select</th>
+                    <th style="width: 40%">Name</th>
+                    <th style="width: 40%">Plan</th>
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
+                        </td>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
+                        </td>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
+                        </td>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
+                        </td>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
+                        </td>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
+                        </td>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
+                        </td>
+                        <td>听力5篇</td>
+                        <td>每周5次</td>
+                    </tr>
+                </table>
+            </div>
+
+            <hr class="plan_hr">
+
+            <div class="left plans_bottom">
+                <button class="plan_big_btn content_cover_sub_bottom_left" >
+                    <span class="icon-checkmark"></span>
+                    <span> Confirm</span>
+                </button>
+                <button class="plan_big_btn content_cover_sub_bottom_right" onclick="closeCheckIn();">
+                    <span class="icon-cross"></span>
+                    <span> Cancel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script type="text/javascript">
+    init()
+</script>
+</html>

@@ -1,0 +1,72 @@
+
+#div_login_placeholder {
+	min-width: 768px;
+	min-height: 500px;
+}
+
+.login {
+	position: absolute;
+	min-width: 768px;
+	min-height: 400px;
+	/*margin-top: 8em;*/
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+
+}
+
+#login_account {
+	font-size: 3em;
+}
+
+button.login_btn {
+	width: 49%;
+	font-size: 2em;
+}
+
+#div_login_new {
+	min-height: 25em;
+	min-width: 50em;
+
+	width: 50em;
+	height: 25em;
+}
+
+#new_account {
+	display: block;
+	font-size: 3.5em;
+
+	margin-top: 10%;
+    border-right: #ffffff 0px solid;
+    border-top: #ffffff 0px solid;
+    border-left: #ffffff 0px solid;
+    border-bottom: #c0c0c0 1px solid;
+	background: transparent;
+	color: #07077c;
+
+    padding : 0;
+}
+
+.create_btn {
+	font-size: 1.5em;
+
+	margin: 15% 5% 0 5%;
+}
+
+@media screen and (min-width: 1024px) {
+	.login {
+		width: 1024px;
+	}
+}
+
+@media screen and (max-width: 768px) {
+	.login {
+		left: 384px;
+	}
+}
+
+@media screen and (max-height: 600px) {
+	.login {
+		top: 300px;
+	}
+}
