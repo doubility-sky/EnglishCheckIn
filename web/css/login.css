@@ -50,7 +50,21 @@ button.login_btn {
 .create_btn {
 	font-size: 1.5em;
 
-	margin: 15% 5% 0 5%;
+	margin: 5% 5% 0 5%;
+}
+
+#login_tips {
+	font-size: 1.5em;
+	color: red;
+	height: 2em;
+	margin-top: 5%;
+}
+
+#register_tips {
+	font-size: 1.5em;
+	color: red;
+	height: 2em;
+	margin-top: 5%;
 }
 
 @media screen and (min-width: 1024px) {

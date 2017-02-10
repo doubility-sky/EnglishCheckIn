@@ -4,6 +4,9 @@ import "github.com/Unknwon/goconfig"
 
 const (
 	defaultSection = "DEFAULT"
+	autoLoginKey = "auto_login"
+	debugKey = "debug"
+	maxUserKey = "max_user"
 
 	mysqlSection         = "MYSQL"
 	mysqlIPKey           = "ip"
@@ -21,6 +24,9 @@ const (
 
 var (
 	// Default section
+	AutoLogin bool
+	Debug bool
+	MaxUser int64
 
 	// Mysql section
 	MysqlIP           string
@@ -42,6 +48,10 @@ func LoadConfigFile(path string) error {
 	if err != nil {
 		return err
 	}
+
+	AutoLogin = conf.MustBool(defaultSection, autoLoginKey, false)
+	Debug = conf.MustBool(defaultSection, debugKey, false)
+	MaxUser = conf.MustInt64(defaultSection, maxUserKey, 0)
 
 	MysqlIP = conf.MustValue(mysqlSection, mysqlIPKey, "127.0.0.1")
 	MysqlPort = conf.MustValue(mysqlSection, mysqlPortKey, "3306")

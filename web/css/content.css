@@ -68,7 +68,7 @@ select.date {
 #div_headmenu {
 	position: absolute;
 	min-width: 300px;
-	right: 1em;
+	right: 0;
 	top: 2em;
 }
 
@@ -91,6 +91,7 @@ select.date {
 
 /* query */
 button.query_btn {
+	display: block;
 	font-size: 1em;
 	margin: 2em auto;
 }
@@ -261,6 +262,18 @@ button.query_btn {
 @media screen and (max-width: 768px) {
 	#div_headmenu {
 		left: 468px;
+	}
+
+	#div_query {
+		width: 768px;
+	}
+
+	#div_plans {
+		width: 768px;
+	}
+
+	#div_record {
+		width: 768px;
 	}
 
 	.cover_sub h2 {

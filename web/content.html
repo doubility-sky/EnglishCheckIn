@@ -12,6 +12,7 @@
         <script src="/scripts/html5shiv.min.js"></script>
     <![endif]-->
 
+    <script type="text/javascript" src="/scripts/common.js"></script>
     <script type="text/javascript" src="/scripts/content.js"></script>
 </head>
 <body>
@@ -24,7 +25,7 @@
             </div>
 
             <div id="div_headmenu">
-                <input type="text" id="hello" readonly="readonly" value="Hi!" />
+                <input type="text" id="hello" readonly="readonly" value="{{.Name}}" />
                 <button id="home" onclick="gotoHome()">
                     <span class="icon-home"></span>
                     <span> Home</span>
@@ -34,7 +35,7 @@
             <div class="div_block" id="div_query">
                 <table class="center" style="width: 90%;">
                     <tr>
-                        <td style="width: 0%;">
+                        <td style="width: 10%;">
                             <select id="query_account" style="font-size: 2em;">
                                 <option value="0">All</option>
                                 <option value ="1">Volvo</option>
@@ -43,24 +44,24 @@
                                 <option value="4">Audi</option>
                             </select>
                         </td>
-                        <td style="width: 50%;">
+                        <td style="width: 40%;">
                             <select id="query_year" style="font-size: 2em;"></select>
                             <select id="query_month" style="font-size: 2em;"></select>
                         </td>
-                        <td   style="width: 30%;">
+                        <td style="width: 40%;">
                             <button class="query_btn" onclick="createTable(16)">
                                 <span class="icon-search"></span>
-                                <span> Query  </span>
+                                <span>Query</span>
                             </button>
                             <a href="#" download="English_Record.csv" onclick="clickDownload(this);">
                                 <button class="query_btn" >
                                     <span class="icon-folder-open"></span>
-                                    <span> Export  </span>
+                                    <span>Export</span>
                                 </button>
                             </a>
                             <button class="query_btn" onclick="openCheckIn();">
                                 <span class="icon-heart"></span>
-                                <span> Check-in  </span>
+                                <span>Check-in</span>
                             </button>
                         </td>
                     </tr>

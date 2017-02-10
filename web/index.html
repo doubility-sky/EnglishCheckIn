@@ -15,6 +15,7 @@
 		<script src="/scripts/html5shiv.min.js"></script>
 	<![endif]-->
 
+	<script type="text/javascript" src="/scripts/common.js"></script>
 	<script type="text/javascript" src="/scripts/login.js"></script>
 </head>
 <body>
@@ -31,18 +32,19 @@
 			</div>
 
 			<div id="div_login_placeholder"></div>
+
 			<div class="center login">
 				<div style="margin-top: 10%">
 					<select id="login_account" >
 						<option value="0">Choose user...</option>
-						<option value ="1">Volvo</option>
-						<option value ="2">Saab</option>
-						<option value="3">Opel</option>
-						<option value="4">Audi</option>
-						<option value ="5">啊啊啊啊啊啊啊啊啊啊</option>
 					</select>
 				</div>
-				<div style="margin-top: 15%">
+
+				<div id="login_tips">
+					
+				</div>
+
+				<div style="margin-top: 5%">
 					<button class="login_btn" onclick="login()">
 						<span class="icon-checkmark"></span>
 						<span> Sign in</span>
@@ -61,11 +63,15 @@
 		<p style="margin-top: 0.2em; font-size: 1.5em">Build by handsome programers in 2017</p>
 	</div>
 
-	<div class="center cover" id="div_new">
+	<div class="center cover" id="div_new" hidden="hidden">
 		<div class="cover_sub" id="div_login_new">
-			<input type="text" class="center" id="new_account" name="new_account" placeholder="Enter Your Name" maxlength=10>
-			</input>
-			<button class="center create_btn" onclick="createNewAccount(document.getElementById('new_account').value);">
+			<input type="text" class="center" id="new_account" name="new_account" placeholder="Enter Your Name" maxlength=10></input>
+
+			<div id="register_tips">
+
+			</div>
+
+			<button class="center create_btn" onclick="createNewAccount();">
 				<span class="icon-plus"></span>
 				<span> Sign up</span>
 			</button>
@@ -76,4 +82,8 @@
 		</div>
 	</div>
 </body>
+
+<script type="text/javascript">
+	init()
+</script>
 </html>

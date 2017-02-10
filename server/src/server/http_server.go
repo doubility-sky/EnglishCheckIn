@@ -7,48 +7,126 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+	// "os"
+	//"io/ioutil"
 )
 
 var (
-	logger *log.Logger
-	route  = map[string]func(http.ResponseWriter, *http.Request){
-		"/":         helloServer,
+	rootPath string
+	logger   *log.Logger
+	route    = map[string]func(http.ResponseWriter, *http.Request){
+		"/":         root,
 		"/login":    login,
 		"/register": register,
 		"/query":    query,
 		"/modify":   modifyPlans,
 		"/checkin":  checkIn,
+		"/userlist": userList,
 	}
+	// pages          = map[string]*template.Template{}
+	COOKIE_MAX_AGE = int(time.Hour * 24 * 3 / time.Second) //3天
+	userNumber     int64
 )
 
+func initPages() {
+	// pages["index"], _ = template.ParseFiles(rootPath + "/index.html")
+	// pages["content"], _ = template.ParseFiles(rootPath + "/content.html")
+}
+
+func initUserNumber() {
+	err, results := common.QueryTable([]string{"count(1)"}, "`tbl_user`", nil, nil, "", nil)
+	if err == nil && results.Next() {
+		results.Scan(&userNumber)
+		logger.Println(fmt.Sprintf("User Number is %d.", userNumber))
+	}
+}
+
 func StartServer(addr, webPath string, l *log.Logger) {
+	rootPath = webPath
 	logger = l
+
+	initPages()
+	initUserNumber()
 
 	serve := http.NewServeMux()
 	for path, handler := range route {
 		serve.HandleFunc(path, handler)
 	}
-	serve.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir(webPath))))
-	serve.Handle("/fonts/", http.StripPrefix("/fonts/", http.FileServer(http.Dir(webPath))))
-	serve.Handle("/image/", http.StripPrefix("/image/", http.FileServer(http.Dir(webPath))))
-	serve.Handle("/scripts/", http.StripPrefix("/scripts/", http.FileServer(http.Dir(webPath))))
+	serve.Handle("/css/", http.StripPrefix("/", http.FileServer(http.Dir(rootPath))))
+	serve.Handle("/fonts/", http.StripPrefix("/", http.FileServer(http.Dir(rootPath))))
+	serve.Handle("/image/", http.StripPrefix("/", http.FileServer(http.Dir(rootPath))))
+	serve.Handle("/scripts/", http.StripPrefix("/", http.FileServer(http.Dir(rootPath))))
 
 	logger.Println("start http server", addr)
 	logger.Println(http.ListenAndServe(addr, serve))
 }
 
-func helloServer(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, time.Now().UTC().String())
+func root(w http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != "/" {
+		http.NotFound(w, req)
+		return
+	}
+
+	if !common.AutoLogin {
+		sendIndexPage(w)
+		return
+	}
+
+	autoLoginCookie, err1 := req.Cookie("auto_login")
+	if err1 != nil || autoLoginCookie.Value != "true" {
+		logger.Println("Cookie 'auto_login' is nil or not true! ip:" + getRemortIP(req))
+		sendIndexPage(w)
+		return
+	}
+
+	userIdCookie, err2 := req.Cookie("user_id")
+	if err2 != nil {
+		logger.Println("Cookie 'user_id' is nil! ip:" + getRemortIP(req))
+		sendIndexPage(w)
+		return
+	}
+	userId := userIdCookie.Value
+	uid, _ := strconv.ParseInt(userId, 10, 64)
+	if uid <= 0 {
+		logger.Println(fmt.Sprintf("Cookie 'user_id' value is not valid number! user id:%s ip:%s",
+			userId, getRemortIP(req)))
+		sendIndexPage(w)
+		return
+	}
+
+	err3, name := loginUser(uid)
+	if err3 != nil {
+		logger.Println(fmt.Sprintf("Auto login failed! err:%s ip:%s", err3.Error(), getRemortIP(req)))
+		sendIndexPage(w)
+		return
+	}
+
+	logger.Println(fmt.Sprintf("Auto login success! user id: %s name:%s ip:%s", userId, name, getRemortIP(req)))
+
+	autoLoginCookie.MaxAge = COOKIE_MAX_AGE
+	http.SetCookie(w, autoLoginCookie)
+	userIdCookie.MaxAge = COOKIE_MAX_AGE
+	http.SetCookie(w, userIdCookie)
+
+	sendContentPage(w, name)
 }
 
 func login(w http.ResponseWriter, req *http.Request) {
-	req.ParseForm()
-	logger.Println("login", req)
+	// not debug
+	if !common.Debug && req.Method != "POST" {
+		logger.Println("Can't call /login, method is not post!")
+		http.Redirect(w, req, "/", http.StatusFound)
+		return
+	}
+
+	values := parseHttpParamsToJson(req)
+	logger.Println("login", values)
 
 	var response = make(map[string]interface{})
 	var msg string
@@ -59,7 +137,8 @@ func login(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, msg)
 	}()
 
-	userId := req.FormValue("user_id")
+	userId, _ := values["user_id"].(string)
+	logger.Println(values["user_id"])
 	uid, _ := strconv.ParseInt(userId, 10, 64)
 	if uid <= 0 {
 		response["errorno"] = -1
@@ -67,26 +146,51 @@ func login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err, results := queryUser(uid)
-	if results != nil {
-		defer results.Close()
-	}
-
+	err, name := loginUser(uid)
 	if err != nil {
 		response["errorno"] = -2
 		response["msg"] = "Login error. " + err.Error()
-	} else if !results.Next() {
-		response["errorno"] = -3
-		response["msg"] = "Login error. No user id: " + userId
-	} else {
-		response["errorno"] = 0
-		response["msg"] = "Login success. id: " + userId
+		return
 	}
+
+	autoLoginCookie := &http.Cookie{
+		Name:     "auto_login",
+		Value:    "true",
+		Path:     "/",
+		HttpOnly: false,
+		MaxAge:   COOKIE_MAX_AGE,
+	}
+	http.SetCookie(w, autoLoginCookie)
+
+	userIdCookie := &http.Cookie{
+		Name:     "user_id",
+		Value:    userId,
+		Path:     "/",
+		HttpOnly: false,
+		MaxAge:   COOKIE_MAX_AGE,
+	}
+	http.SetCookie(w, userIdCookie)
+
+	sendContentPage(w, name)
 }
 
 func register(w http.ResponseWriter, req *http.Request) {
-	req.ParseForm()
-	logger.Println("register", req)
+	// not debug
+	if !common.Debug && req.Method != "POST" {
+		logger.Println("Can't call /register, method is not post!")
+		http.Redirect(w, req, "/", http.StatusFound)
+		return
+	}
+
+	// HACK: defend too many users, will be improved in future.
+	if userNumber >= common.MaxUser {
+		logger.Println(fmt.Sprintf("Can't register, too many users already! users:%d, limit:%d", userNumber, common.MaxUser))
+		http.Redirect(w, req, "/", http.StatusFound)
+		return
+	}
+
+	values := parseHttpParamsToJson(req)
+	logger.Println("register", values)
 
 	var response = make(map[string]interface{})
 	var msg string
@@ -97,7 +201,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, msg)
 	}()
 
-	name := req.FormValue("name")
+	name, _ := values["name"].(string)
 	if len(name) == 0 {
 		response["errorno"] = -1
 		response["msg"] = "Param name is null!"
@@ -107,17 +211,43 @@ func register(w http.ResponseWriter, req *http.Request) {
 	err, id := insertUser(name)
 	if err != nil {
 		response["errorno"] = -2
-		response["msg"] = "Register error. " + err.Error()
+		response["msg"] = "Register error. Reduplicated names."
 		return
 	}
 
-	response["errorno"] = 0
-	response["id"] = id
+	userNumber = userNumber + 1
+
+	autoLoginCookie := &http.Cookie{
+		Name:     "auto_login",
+		Value:    "true",
+		Path:     "/",
+		HttpOnly: false,
+		MaxAge:   COOKIE_MAX_AGE,
+	}
+	http.SetCookie(w, autoLoginCookie)
+
+	userIdCookie := &http.Cookie{
+		Name:     "user_id",
+		Value:    strconv.FormatInt(id, 10),
+		Path:     "/",
+		HttpOnly: false,
+		MaxAge:   COOKIE_MAX_AGE,
+	}
+	http.SetCookie(w, userIdCookie)
+
+	sendContentPage(w, name)
 }
 
 func query(w http.ResponseWriter, req *http.Request) {
-	req.ParseForm()
-	logger.Println("query", req)
+	// not debug
+	if !common.Debug && req.Method != "POST" {
+		logger.Println("Can't call /query, method is not post!")
+		http.Redirect(w, req, "/", http.StatusFound)
+		return
+	}
+
+	values := parseHttpParamsToJson(req)
+	logger.Println("query", values)
 
 	var response = make(map[string]interface{})
 	var msg string
@@ -128,7 +258,7 @@ func query(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, msg)
 	}()
 
-	userId := req.FormValue("user_id")
+	userId, _ := values["user_id"].(string)
 	uid, _ := strconv.ParseInt(userId, 10, 64)
 
 	// uid = 0 means only query all users' data.
@@ -142,7 +272,6 @@ func query(w http.ResponseWriter, req *http.Request) {
 		}
 
 		responsePlans := make(map[string]([]map[string]interface{}))
-		response["plans"] = responsePlans
 		if plans != nil {
 			defer plans.Close()
 
@@ -168,16 +297,19 @@ func query(w http.ResponseWriter, req *http.Request) {
 				array = append(array, p)
 			}
 		}
+		response["plans"] = responsePlans
 	}
 
 	// query records
-	date := req.FormValue("date")
-	if len(date) == 0 {
+	date, _ := values["date"].(string)
+	beginTime, _ := strconv.ParseInt(date, 10, 64)
+	if beginTime <= 0 {
 		response["errorno"] = 0
 		return
 	}
+	endTime := time.Unix(beginTime, 0).AddDate(0, 1, 0).Unix() - 1
 
-	err, records := queryRecords(uid)
+	err, records := queryRecords(uid, beginTime, endTime)
 	if err != nil {
 		response["errorno"] = -3
 		response["msg"] = "Query records error. " + err.Error()
@@ -185,7 +317,6 @@ func query(w http.ResponseWriter, req *http.Request) {
 	}
 
 	responseRecords := make(map[string]([]map[string]interface{}))
-	response["records"] = responseRecords
 	if records != nil {
 		defer records.Close()
 
@@ -213,14 +344,22 @@ func query(w http.ResponseWriter, req *http.Request) {
 			array = append(array, r)
 		}
 	}
+	response["records"] = responseRecords
 
 	// success
 	response["errorno"] = 0
 }
 
 func modifyPlans(w http.ResponseWriter, req *http.Request) {
-	req.ParseForm()
-	logger.Println("modifyPlans", req)
+	// not debug
+	if !common.Debug && req.Method != "POST" {
+		logger.Println("Can't call /modifyPlans, method is not post!")
+		http.Redirect(w, req, "/", http.StatusFound)
+		return
+	}
+
+	values := parseHttpParamsToJson(req)
+	logger.Println("modifyPlans", values)
 
 	var response = make(map[string]interface{})
 	var msg string
@@ -231,7 +370,7 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, msg)
 	}()
 
-	userId := req.FormValue("user_id")
+	userId, _ := values["user_id"].(string)
 	uid, _ := strconv.ParseInt(userId, 10, 64)
 	if uid <= 0 {
 		response["errorno"] = -1
@@ -239,17 +378,10 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	data := req.FormValue("data")
-	if len(data) == 0 {
+	plans, _ := values["data"].([]map[string]interface{})
+	if plans == nil {
 		response["errorno"] = -1
 		response["msg"] = "No plan is changed!"
-		return
-	}
-
-	plans := make([]map[string]interface{}, 0)
-	if err := json.Unmarshal([]byte(data), &plans); err != nil {
-		response["errorno"] = -2
-		response["msg"] = "Plan data json unmarshal failed! " + err.Error()
 		return
 	}
 
@@ -274,8 +406,15 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 }
 
 func checkIn(w http.ResponseWriter, req *http.Request) {
-	req.ParseForm()
-	logger.Println("checkIn", req)
+	// not debug
+	if !common.Debug && req.Method != "POST" {
+		logger.Println("Can't call /checkIn, method is not post!")
+		http.Redirect(w, req, "/", http.StatusFound)
+		return
+	}
+
+	values := parseHttpParamsToJson(req)
+	logger.Println("checkIn", values)
 
 	var response = make(map[string]interface{})
 	var msg string
@@ -286,7 +425,7 @@ func checkIn(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, msg)
 	}()
 
-	userId := req.FormValue("user_id")
+	userId, _ := values["user_id"].(string)
 	uid, _ := strconv.ParseInt(userId, 10, 64)
 	if uid <= 0 {
 		response["errorno"] = -1
@@ -294,17 +433,10 @@ func checkIn(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	data := req.FormValue("data")
-	if len(data) == 0 {
+	records, _ := values["data"].(map[string]interface{})
+	if records == nil {
 		response["errorno"] = -1
 		response["msg"] = "No checkIn!"
-		return
-	}
-
-	records := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(data), &records); err != nil {
-		response["errorno"] = -2
-		response["msg"] = "Record data json unmarshal failed! " + err.Error()
 		return
 	}
 
@@ -338,16 +470,134 @@ func checkIn(w http.ResponseWriter, req *http.Request) {
 	response["errorno"] = 0
 }
 
+func userList(w http.ResponseWriter, req *http.Request) {
+	// not debug
+	if !common.Debug && req.Method != "POST" {
+		logger.Println("Can't call /userList, method is not post!")
+		http.Redirect(w, req, "/", http.StatusFound)
+		return
+	}
+
+	req.ParseForm()
+	logger.Println("userList", req)
+
+	var response = make(map[string]interface{})
+	var msg string
+
+	defer func() {
+		msg = responseJsonToString(response)
+		logger.Println(msg)
+		io.WriteString(w, msg)
+	}()
+
+	err, results := queryUser(0)
+	if err != nil {
+		response["errorno"] = -1
+		response["msg"] = "Query User List error. " + err.Error()
+		return
+	}
+
+	data := make([]map[string]interface{}, 0)
+	for results.Next() {
+		var uid int64
+		var name string
+		if err := results.Scan(&uid, &name); err != nil {
+			logger.Println(err.Error())
+			continue
+		}
+
+		data = append(data, map[string]interface{}{
+			"user_id": uid,
+			"name":    name,
+		})
+	}
+	response["data"] = data
+
+	response["errorno"] = 0
+}
+
+func sendIndexPage(w http.ResponseWriter) {
+	// var html = pages["index"]
+	var html, _ = template.ParseFiles(rootPath + "/index.html")
+
+	html.Execute(w, nil)
+}
+
+func sendContentPage(w http.ResponseWriter, name string) {
+	// var html = pages["content"]
+	var html, _ = template.ParseFiles(rootPath + "/content.html")
+
+	data := struct {
+		Name string
+	}{
+		Name: name,
+	}
+	// html.Execute(os.Stdout, data)
+	html.Execute(w, data)
+}
+
+func parseHttpParamsToJson(req *http.Request) (values map[string]interface{}) {
+	values = make(map[string]interface{})
+
+	req.ParseForm()
+
+	for k, v := range req.Form {
+		values[k] = v[0]
+	}
+
+	if req.Method == "POST" && req.Header.Get("Content-Type") == "application/json" {
+		tmp := make(map[string]interface{})
+		json.NewDecoder(req.Body).Decode(&tmp)
+		for k, v := range tmp {
+			values[k] = v
+		}
+	}
+
+	logger.Println("xxxx", values)
+	return
+}
+
 func responseJsonToString(response map[string]interface{}) string {
-	if msg, err := json.Marshal(response); err == nil {
+	if msg, err := json.Marshal(response); err != nil {
+		logger.Println("responseJsonToString error: " + err.Error())
 		return "{}"
 	} else {
 		return string(msg)
 	}
 }
 
+func getRemortIP(req *http.Request) (ip string) {
+	if ip = req.Header.Get("x-forwarded-for"); ip == "" {
+		ip = req.RemoteAddr
+	}
+	return
+}
+
+func loginUser(userId int64) (err error, name string) {
+	e, results := queryUser(userId)
+	if results != nil {
+		defer results.Close()
+	}
+
+	var uid int64
+	if e != nil {
+		err = errors.New(e.Error())
+	} else if !results.Next() {
+		err = errors.New(fmt.Sprintf("No user id: %d", userId))
+	} else if e = results.Scan(&uid, &name); e != nil {
+		err = errors.New(fmt.Sprintf("Get user name failed. user id: %d", userId))
+	}
+
+	return
+}
+
 func queryUser(userId int64) (err error, results *sql.Rows) {
-	err, results = common.QueryTable([]string{"1"}, "`tbl_user`", []*common.KeyValue{&common.KeyValue{"`user_id`", userId}}, nil, "", nil)
+	where := make([]*common.KeyValue, 0)
+	if userId > 0 {
+		where = append(where, &common.KeyValue{"`user_id`", userId})
+	}
+	err, results = common.QueryTable([]string{"`user_id`, `name`"}, "`tbl_user`", where, nil, "", nil)
+
 	return
 }
 
@@ -363,10 +613,16 @@ func queryPlans(userId int64) (err error, results *sql.Rows) {
 	return
 }
 
-func queryRecords(userId int64) (err error, results *sql.Rows) {
+func queryRecords(userId, beginTime, endTime int64) (err error, results *sql.Rows) {
 	where := make([]*common.KeyValue, 0)
 	if userId > 0 {
 		where = append(where, &common.KeyValue{"`user_id`", userId})
+	}
+
+	if beginTime > 0 && endTime > 0 {
+		where = append(where, &common.KeyValue{
+			fmt.Sprintf("`checkin_time` between FROM_UNIXTIME(%d) and FROM_UNIXTIME(%d)", beginTime, endTime),
+			nil})
 	}
 
 	err, results = common.QueryTable(

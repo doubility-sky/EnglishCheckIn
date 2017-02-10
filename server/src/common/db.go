@@ -107,8 +107,10 @@ func QueryTable(selects []string, from string, where []*KeyValue, group []string
 		for _, v := range where {
 			if v.Value != nil {
 				values = append(values, v.Value)
+				whereStatements = append(whereStatements, fmt.Sprintf("%s=?", v.Key))
+			} else {
+				whereStatements = append(whereStatements, v.Key)
 			}
-			whereStatements = append(whereStatements, fmt.Sprintf("%s=?", v.Key))
 		}
 	}
 
@@ -132,7 +134,11 @@ func QueryTable(selects []string, from string, where []*KeyValue, group []string
 	querySql := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s;",
 		strings.Join(selects, ","), from, whereStr, groupStr, havingStr, orderStr)
 
-	if results, err = Query(querySql, values); err != nil {
+	if Debug {
+		logger.Println("SQL:", fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...))
+	}
+
+	if results, err = Query(querySql, values...); err != nil {
 		sql := fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...)
 		err = errors.New(fmt.Sprintf("Query table error: %s. sql: %s", err.Error(), sql))
 	}
@@ -169,6 +175,10 @@ func InsertTable(table string, params map[string]interface{}, update map[string]
 	querySql := fmt.Sprintf("INSERT INTO %s(%s) VALUES(%s) %s;",
 		table, strings.Join(columns, ","), strings.Join(placeholders, ","), updateStr)
 
+	if Debug {
+		logger.Println("SQL:", fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...))
+	}
+
 	if result, e := Exec(querySql, values...); e != nil {
 		sql := fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...)
 		err = errors.New(fmt.Sprintf("Replace table error: %s. sql: %s", e.Error(), sql))
@@ -199,8 +209,10 @@ func UpdateTable(table string, update map[string]interface{}, where []*KeyValue)
 		for _, v := range where {
 			if v.Value != nil {
 				values = append(values, v.Value)
+				whereStatements = append(whereStatements, fmt.Sprintf("%s=?", v.Key))
+			} else {
+				whereStatements = append(whereStatements, v.Key)
 			}
-			whereStatements = append(whereStatements, fmt.Sprintf("%s=?", v.Key))
 		}
 	}
 
@@ -210,6 +222,10 @@ func UpdateTable(table string, update map[string]interface{}, where []*KeyValue)
 	}
 
 	querySql := fmt.Sprintf("UPDATE %s SET %s %s;", table, strings.Join(updateStatements, ","), whereStr)
+
+	if Debug {
+		logger.Println("SQL:", fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...))
+	}
 
 	if result, e := Exec(querySql, values...); e != nil {
 		sql := fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...)

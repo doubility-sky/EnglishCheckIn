@@ -1,3 +1,4 @@
+var uid, name
 var recordTableId = 'records'
 var now, nowY, nowM, nowDay
 
@@ -6,13 +7,6 @@ function resetDate(d) {
     nowY = now.getFullYear()
     nowM = now.getMonth() + 1
     nowDay = now.getDate()
-}
-
-function createOption(value, text) {
-    var option = document.createElement('option')
-    option.value = value
-    option.text = text
-    return option
 }
 
 function openCheckIn() {
@@ -142,19 +136,11 @@ function setClassCalender(id) {
 }
 
 function init() {
+    // init variables
+    var cookieUserId = getCookieValue("user_id")
+
     // reset date
     resetDate()
-
-    // url query params
-    function getQueryString(name) {
-        var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)')
-        var r = window.location.search.substr(1).match(reg)
-        if(r!=null)return  decodeURIComponent(r[2]); return null
-    }
-
-    var id = getQueryString('id')
-    var name = getQueryString('name')
-    document.getElementById('hello').value = 'Hi, ' + name
 
     // init query date selector
     var minYear = 2015
@@ -180,5 +166,7 @@ function init() {
     monthSelect.value = nowM
 
     // init query user
-    document.getElementById('query_account').value = id
+    if (cookieUserId != null) {
+        document.getElementById('query_account').value = uid
+    }
 }
