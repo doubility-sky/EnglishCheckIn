@@ -15,6 +15,7 @@ import (
 	"time"
 	// "os"
 	//"io/ioutil"
+	"regexp"
 )
 
 var (
@@ -40,7 +41,7 @@ func initPages() {
 }
 
 func initUserNumber() {
-	err, results := common.QueryTable([]string{"count(1)"}, "`tbl_user`", nil, nil, "", nil)
+	results, err := common.QueryTable([]string{"count(1)"}, "`tbl_user`", nil, nil, "", nil)
 	if err == nil && results.Next() {
 		results.Scan(&userNumber)
 		logger.Println(fmt.Sprintf("User Number is %d.", userNumber))
@@ -78,15 +79,15 @@ func root(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	autoLoginCookie, err1 := req.Cookie("auto_login")
-	if err1 != nil || autoLoginCookie.Value != "true" {
+	autoLoginCookie, err := req.Cookie("auto_login")
+	if err != nil || autoLoginCookie.Value != "true" {
 		logger.Println("Cookie 'auto_login' is nil or not true! ip:" + getRemortIP(req))
 		sendIndexPage(w)
 		return
 	}
 
-	userIdCookie, err2 := req.Cookie("user_id")
-	if err2 != nil {
+	userIdCookie, err := req.Cookie("user_id")
+	if err != nil {
 		logger.Println("Cookie 'user_id' is nil! ip:" + getRemortIP(req))
 		sendIndexPage(w)
 		return
@@ -100,9 +101,9 @@ func root(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err3, name := loginUser(uid)
-	if err3 != nil {
-		logger.Println(fmt.Sprintf("Auto login failed! err:%s ip:%s", err3.Error(), getRemortIP(req)))
+	name, err := loginUser(uid)
+	if err != nil {
+		logger.Println(fmt.Sprintf("Auto login failed! err:%s ip:%s", err.Error(), getRemortIP(req)))
 		sendIndexPage(w)
 		return
 	}
@@ -114,7 +115,7 @@ func root(w http.ResponseWriter, req *http.Request) {
 	userIdCookie.MaxAge = COOKIE_MAX_AGE
 	http.SetCookie(w, userIdCookie)
 
-	sendContentPage(w, name)
+	sendContentPage(w, uid, name)
 }
 
 func login(w http.ResponseWriter, req *http.Request) {
@@ -146,7 +147,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err, name := loginUser(uid)
+	name, err := loginUser(uid)
 	if err != nil {
 		response["errorno"] = -2
 		response["msg"] = "Login error. " + err.Error()
@@ -171,7 +172,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 	}
 	http.SetCookie(w, userIdCookie)
 
-	sendContentPage(w, name)
+	sendContentPage(w, uid, name)
 }
 
 func register(w http.ResponseWriter, req *http.Request) {
@@ -208,9 +209,16 @@ func register(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err, id := insertUser(name)
-	if err != nil {
+	re := regexp.MustCompile("[\u0000-\u002F\u003A-\u0040\u005B-\u0060\u007B-\u007F]")
+	if str := re.FindString(name); len(str) > 0 {
 		response["errorno"] = -2
+		response["msg"] = "Name can't contain special character: " + str
+		return
+	}
+
+	uid, err := insertUser(name)
+	if err != nil {
+		response["errorno"] = -3
 		response["msg"] = "Register error. Reduplicated names."
 		return
 	}
@@ -228,14 +236,14 @@ func register(w http.ResponseWriter, req *http.Request) {
 
 	userIdCookie := &http.Cookie{
 		Name:     "user_id",
-		Value:    strconv.FormatInt(id, 10),
+		Value:    strconv.FormatInt(uid, 10),
 		Path:     "/",
 		HttpOnly: false,
 		MaxAge:   COOKIE_MAX_AGE,
 	}
 	http.SetCookie(w, userIdCookie)
 
-	sendContentPage(w, name)
+	sendContentPage(w, uid, name)
 }
 
 func query(w http.ResponseWriter, req *http.Request) {
@@ -260,56 +268,63 @@ func query(w http.ResponseWriter, req *http.Request) {
 
 	userId, _ := values["user_id"].(string)
 	uid, _ := strconv.ParseInt(userId, 10, 64)
+	
+	name, _ := values["name"].(string)
+
+	date, _ := values["date"].(string)
+	beginTime, _ := strconv.ParseInt(date, 10, 64)
+
+	response["user_id"] = userId
+	response["name"] = name
+	response["date"] = date
 
 	// uid = 0 means only query all users' data.
 	// query plans. TODO: client not support query all users' plans.
-	if uid > 0 {
-		err, plans := queryPlans(uid)
-		if err != nil {
-			response["errorno"] = -2
-			response["msg"] = "Query plans error. " + err.Error()
-			return
-		}
-
-		responsePlans := make(map[string]([]map[string]interface{}))
-		if plans != nil {
-			defer plans.Close()
-
-			for plans.Next() {
-				var planUserId, planId int64
-				var content, plan string
-				if err := plans.Scan(&planUserId, &planId, &content, &plan); err != nil {
-					logger.Println("Scan plans fail! user_id:" + userId)
-					continue
-				}
-
-				userIdStr := strconv.FormatInt(planUserId, 10)
-				array, ok := responsePlans[userIdStr]
-				if !ok {
-					array = make([]map[string]interface{}, 0)
-					responsePlans[userIdStr] = array
-				}
-
-				p := make(map[string]interface{})
-				p["plan_id"] = planId
-				p["content"] = content
-				p["plan"] = plan
-				array = append(array, p)
-			}
-		}
-		response["plans"] = responsePlans
+	plans, err := queryPlans(uid)
+	if err != nil {
+		response["errorno"] = -2
+		response["msg"] = "Query plans error. " + err.Error()
+		return
 	}
 
+	responsePlans := make(map[string]([]map[string]interface{}))
+	if plans != nil {
+		defer plans.Close()
+
+		for plans.Next() {
+			var planUserId, planId int64
+			var planUserName, content, plan string
+			if err := plans.Scan(&planUserId, &planUserName, &planId, &content, &plan); err != nil {
+				logger.Println("Scan plans fail! user_id:" + userId)
+				continue
+			}
+
+			userIdStr := strconv.FormatInt(planUserId, 10)
+			planKey := userIdStr + "," + planUserName
+			array, ok := responsePlans[planKey]
+			if !ok {
+				array = make([]map[string]interface{}, 0)
+			}
+
+			p := make(map[string]interface{})
+			p["plan_id"] = strconv.FormatInt(planId, 10)
+			p["content"] = content
+			p["plan"] = plan
+			array = append(array, p)
+
+			responsePlans[planKey] = array
+		}
+	}
+	response["plans"] = responsePlans
+
 	// query records
-	date, _ := values["date"].(string)
-	beginTime, _ := strconv.ParseInt(date, 10, 64)
 	if beginTime <= 0 {
 		response["errorno"] = 0
 		return
 	}
 	endTime := time.Unix(beginTime, 0).AddDate(0, 1, 0).Unix() - 1
 
-	err, records := queryRecords(uid, beginTime, endTime)
+	records, err := queryRecords(uid, beginTime, endTime)
 	if err != nil {
 		response["errorno"] = -3
 		response["msg"] = "Query records error. " + err.Error()
@@ -322,26 +337,28 @@ func query(w http.ResponseWriter, req *http.Request) {
 
 		for records.Next() {
 			var recordUserId, planId, checkInTime, recordTime int64
-			var content, plan string
-			if err := records.Scan(&recordUserId, &planId, &content, &plan, &checkInTime, &recordTime); err != nil {
+			var recordUserName, content, plan string
+			if err := records.Scan(&recordUserId, &recordUserName, &planId, &content, &plan, &checkInTime, &recordTime); err != nil {
 				logger.Println("Scan records fail! id:" + userId)
 				continue
 			}
 
 			userIdStr := strconv.FormatInt(recordUserId, 10)
-			array, ok := responseRecords[userIdStr]
+			recordKey := userIdStr + "," + recordUserName
+			array, ok := responseRecords[recordKey]
 			if !ok {
 				array = make([]map[string]interface{}, 0)
-				responseRecords[userIdStr] = array
 			}
 
 			r := make(map[string]interface{})
-			r["plan_id"] = planId
+			r["plan_id"] = strconv.FormatInt(planId, 10)
 			r["content"] = content
 			r["plan"] = plan
-			r["checkin_time"] = checkInTime
-			r["record_time"] = recordTime
+			r["checkin_time"] = strconv.FormatInt(checkInTime, 10)
+			r["record_time"] = strconv.FormatInt(recordTime, 10)
 			array = append(array, r)
+
+			responseRecords[recordKey] = array
 		}
 	}
 	response["records"] = responseRecords
@@ -396,7 +413,7 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 			content, _ := v["content"].(string)
 			plan, _ := v["plan"].(string)
 
-			if e, _ := insertPlan(uid, content, plan); e != nil {
+			if _, e := insertPlan(uid, content, plan); e != nil {
 				logger.Println(e.Error())
 			}
 		}
@@ -490,7 +507,7 @@ func userList(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, msg)
 	}()
 
-	err, results := queryUser(0)
+	results, err := queryUser(0)
 	if err != nil {
 		response["errorno"] = -1
 		response["msg"] = "Query User List error. " + err.Error()
@@ -523,14 +540,18 @@ func sendIndexPage(w http.ResponseWriter) {
 	html.Execute(w, nil)
 }
 
-func sendContentPage(w http.ResponseWriter, name string) {
+func sendContentPage(w http.ResponseWriter, userId int64, name string) {
 	// var html = pages["content"]
 	var html, _ = template.ParseFiles(rootPath + "/content.html")
 
 	data := struct {
-		Name string
+		Time   int64
+		UserId int64
+		Name   string
 	}{
-		Name: name,
+		Time:   time.Now().UTC().Unix(),
+		UserId: userId,
+		Name:   name,
 	}
 	// html.Execute(os.Stdout, data)
 	html.Execute(w, data)
@@ -553,7 +574,6 @@ func parseHttpParamsToJson(req *http.Request) (values map[string]interface{}) {
 		}
 	}
 
-	logger.Println("xxxx", values)
 	return
 }
 
@@ -573,8 +593,8 @@ func getRemortIP(req *http.Request) (ip string) {
 	return
 }
 
-func loginUser(userId int64) (err error, name string) {
-	e, results := queryUser(userId)
+func loginUser(userId int64) (name string, err error) {
+	results, e := queryUser(userId)
 	if results != nil {
 		defer results.Close()
 	}
@@ -591,32 +611,33 @@ func loginUser(userId int64) (err error, name string) {
 	return
 }
 
-func queryUser(userId int64) (err error, results *sql.Rows) {
+func queryUser(userId int64) (results *sql.Rows, err error) {
 	where := make([]*common.KeyValue, 0)
 	if userId > 0 {
 		where = append(where, &common.KeyValue{"`user_id`", userId})
 	}
-	err, results = common.QueryTable([]string{"`user_id`, `name`"}, "`tbl_user`", where, nil, "", nil)
+	results, err = common.QueryTable([]string{"`user_id`, `name`"}, "`tbl_user`", where, nil, "", []string{"`user_id`"})
 
 	return
 }
 
-func queryPlans(userId int64) (err error, results *sql.Rows) {
+func queryPlans(userId int64) (results *sql.Rows, err error) {
 	where := make([]*common.KeyValue, 0)
 	if userId > 0 {
-		where = append(where, &common.KeyValue{"`user_id`", userId})
+		where = append(where, &common.KeyValue{"a.`user_id`", userId})
 	}
 	where = append(where, &common.KeyValue{"NOW() between `begin_time` and `end_time`", nil})
 
-	err, results = common.QueryTable([]string{"`user_id`", "`plan_id`", "`content`", "`plan`"},
-		"`tbl_plans`", where, nil, "", []string{"`user_id`", "`plan_id`"})
+	results, err = common.QueryTable([]string{"a.`user_id`", "b.`name`", "a.`plan_id`", "a.`content`", "a.`plan`"},
+		"`tbl_plans` a LEFT JOIN `tbl_user` b ON a.`user_id` = b.`user_id`", where, nil, "", 
+		[]string{"a.`user_id`", "a.`plan_id`"})
 	return
 }
 
-func queryRecords(userId, beginTime, endTime int64) (err error, results *sql.Rows) {
+func queryRecords(userId, beginTime, endTime int64) (results *sql.Rows, err error) {
 	where := make([]*common.KeyValue, 0)
 	if userId > 0 {
-		where = append(where, &common.KeyValue{"`user_id`", userId})
+		where = append(where, &common.KeyValue{"a.`user_id`", userId})
 	}
 
 	if beginTime > 0 && endTime > 0 {
@@ -625,33 +646,33 @@ func queryRecords(userId, beginTime, endTime int64) (err error, results *sql.Row
 			nil})
 	}
 
-	err, results = common.QueryTable(
-		[]string{"a.`user_id`", "a.`plan_id`", "b.`content`", "b.`plan`",
+	results, err = common.QueryTable(
+		[]string{"a.`user_id`", "c.`name`", "a.`plan_id`", "b.`content`", "b.`plan`",
 			"UNIX_TIMESTAMP(a.`checkin_time`) as `checkin_time`",
 			"UNIX_TIMESTAMP(a.`record_time`) as `record_time`"},
-		"`tbl_records` a LEFT JOIN `tbl_plans` b ON a.`plan_id` = b.`plan_id`",
+		"`tbl_records` a LEFT JOIN `tbl_plans` b ON a.`plan_id` = b.`plan_id` LEFT JOIN `tbl_user` c ON a.`user_id` = c.`user_id`",
 		where, nil, "",
 		[]string{"a.`user_id`", "a.`plan_id`", "a.`checkin_time`"})
 	return
 }
 
-func insertUser(name string) (err error, userId int64) {
+func insertUser(name string) (userId int64, err error) {
 	if len(name) == 0 {
 		err = errors.New(fmt.Sprintf("insertUser params error! name:%s;", name))
 		return
 	}
 
-	err, userId = common.InsertTable("`tbl_user`", map[string]interface{}{"`name`": name}, nil)
+	userId, err = common.InsertTable("`tbl_user`", map[string]interface{}{"`name`": name}, nil)
 	return
 }
 
-func insertPlan(userId int64, content, plan string) (err error, planId int64) {
+func insertPlan(userId int64, content, plan string) (planId int64, err error) {
 	if userId <= 0 || len(content) == 0 || len(plan) == 0 {
 		err = errors.New(fmt.Sprintf("insertPlan params error! userId:%d; content:%s; plan:%s;", userId, content, plan))
 		return
 	}
 
-	err, planId = common.InsertTable("`tbl_plans`", map[string]interface{}{
+	planId, err = common.InsertTable("`tbl_plans`", map[string]interface{}{
 		"`user_id`": userId,
 		"`content`": content,
 		"`plan`":    plan,
@@ -659,13 +680,13 @@ func insertPlan(userId int64, content, plan string) (err error, planId int64) {
 	return
 }
 
-func insertRecord(userId, planId, checkInTime int64) (err error, recordId int64) {
+func insertRecord(userId, planId, checkInTime int64) (recordId int64, err error) {
 	if userId <= 0 || planId <= 0 || checkInTime <= 0 {
 		err = errors.New(fmt.Sprintf("insertRecord params error! userId:%d; planId:%d; checkInTime:%d;", userId, planId, checkInTime))
 		return
 	}
 
-	err, recordId = common.InsertTable("`tbl_records`", map[string]interface{}{
+	recordId, err = common.InsertTable("`tbl_records`", map[string]interface{}{
 		"`user_id`":      userId,
 		"`plan_id`":      planId,
 		"`checkin_time`": fmt.Sprintf("FROM_UNIXTIME(%d)", checkInTime),

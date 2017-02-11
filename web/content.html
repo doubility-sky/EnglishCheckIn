@@ -18,43 +18,47 @@
 <body>
     <div class="main">
         <div class="content">
+
+            <!-- weixin share image -->
+            <div hidden="hidden">
+                <img id="share_wx_logo" src="/image/big_logo.png" height="0" width="0" />
+            </div>
+
+            <!-- header -->
             <div class="header">
                 <img src="/image/middle_logo.png"/>
-                <h1>English Check-in</h1>
+                <h1>Plan Check-in</h1>
                 <hr>
             </div>
 
             <div id="div_headmenu">
-                <input type="text" id="hello" readonly="readonly" value="{{.Name}}" />
+                <input type="text" id="hello" readonly="readonly" value="Hi,{{.Name}}" />
                 <button id="home" onclick="gotoHome()">
                     <span class="icon-home"></span>
                     <span> Home</span>
                 </button>
             </div>
 
+            <!-- middle begin -->
             <div class="div_block" id="div_query">
-                <table class="center" style="width: 90%;">
+                <table class="center" style="width: 90%;table-layout:fixed;">
                     <tr>
-                        <td style="width: 10%;">
+                        <td style="width: 20%;">
                             <select id="query_account" style="font-size: 2em;">
-                                <option value="0">All</option>
-                                <option value ="1">Volvo</option>
-                                <option value ="2">Saab</option>
-                                <option value="3">Opel</option>
-                                <option value="4">Audi</option>
+                                <option value="0">All...</option>
                             </select>
                         </td>
                         <td style="width: 40%;">
                             <select id="query_year" style="font-size: 2em;"></select>
                             <select id="query_month" style="font-size: 2em;"></select>
                         </td>
-                        <td style="width: 40%;">
-                            <button class="query_btn" onclick="createTable(16)">
+                        <td style="width: 30%;">
+                            <button class="query_btn" onclick="query()">
                                 <span class="icon-search"></span>
                                 <span>Query</span>
                             </button>
-                            <a href="#" download="English_Record.csv" onclick="clickDownload(this);">
-                                <button class="query_btn" >
+                            <a href="#" download="English_Record.csv" id="export_query_a" onclick="return false;" >
+                                <button class="query_btn" id="export_query" disabled="disabled">
                                     <span class="icon-folder-open"></span>
                                     <span>Export</span>
                                 </button>
@@ -70,24 +74,16 @@
 
             <div class="center div_block" id="div_plans">
                 <div class="div_sub">
-                    <table class="center" id="plans">
-                        <th>No</th>
-                        <th>Name</th>
-                        <th>Plan</th>
-                        <tr>
-                            <td>A.</td>
-                            <td>听力5篇</td>
-                            <td>每周5次</td>
-                        </tr>
-                        <tr>
-                            <td>B.</td>
-                            <td>阅读5篇</td>
-                            <td>每天</td>
-                        </tr>
+                    <h3 id="plans_name">{{.Name}}</h3>
+                </div>
+                <div class="div_sub">
+                    <table class="center" style="table-layout: fixed;" id="plans">
+                        <th style="width: 50%;">Name</th>
+                        <th style="width: 50%;">Plan</th>
                     </table>
                 </div>
                 <div class="div_sub">
-                    <button class="content_common_btn" onclick="openOptPlans();">
+                    <button class="content_common_btn" id="open_operate_plans" onclick="openModifyPlans();">
                         <span class="icon-wrench"></span>
                         <span> Modify  </span>
                     </button>
@@ -98,22 +94,26 @@
                 <div class="div_sub" id="div_record_sub">
 
                 </div>
-                <a href="#" download="English_Record.csv" onclick="clickDownload(this);">
-                    <button class="content_common_btn" >
+                <a href="#" download="English_Record.csv" id="export_record_a" onclick="return false;">
+                    <button class="content_common_btn" id="export_record" >
                         <span class="icon-folder-open"></span>
                         <span> Export  </span>
                     </button>
                 </a>
             </div>
+
+            <!-- middle begin end -->
         </div>
     </div>
 
+    <!-- footer -->
     <div class="center footer">
         <hr>
         <p style="margin-top: 0.2em; font-size: 1.5em">Build by handsome programers in 2017</p>
     </div>
 
-    <div class="center cover" id="div_opt_plans">
+    <!-- cover layer begin -->
+    <div class="center cover" id="div_modify_plans" hidden="hidden">
         <div class="cover_sub div_plans_sub">
             <div class="left div_plans_head">
                 <div class="content_cover_sub_head_left">
@@ -190,10 +190,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <input type="text" class="opt_input center" placeholder="e.g. 阅读5篇" maxlength="10" />
+                            <input type="text" class="modify_input center" placeholder="e.g. 阅读5篇" maxlength="10" />
                         </td>
                         <td>
-                            <input type="text" class="opt_input center" placeholder="e.g. 每周5次" maxlength="10" />
+                            <input type="text" class="modify_input center" placeholder="e.g. 每周5次" maxlength="10" />
                         </td>
                         <td>
                             <button class="plan_btn">
@@ -211,7 +211,7 @@
                     <span class="icon-checkmark"></span>
                     <span> Confirm</span>
                 </button>
-                <button class="plan_big_btn content_cover_sub_bottom_right" onclick="closeOptPlans();">
+                <button class="plan_big_btn content_cover_sub_bottom_right" onclick="closeModifyPlans();">
                     <span class="icon-cross"></span>
                     <span> Cancel</span>
                 </button>
@@ -309,6 +309,12 @@
             </div>
         </div>
     </div>
+    <!-- cover layer end -->
+
+    <!-- hidden value -->
+    <input type="text" id="server_time" hidden="hidden" value="{{.Time}}" />
+    <input type="text" id="user_id" hidden="hidden" value="{{.UserId}}" />
+    <input type="text" id="user_name" hidden="hidden" value="{{.Name}}" />
 </body>
 
 <script type="text/javascript">

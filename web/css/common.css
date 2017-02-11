@@ -32,7 +32,10 @@ button {
 
 button:active {
 	color: rgba(90, 90, 209, 0.5);
+}
 
+button:disabled {
+	color: rgba(90, 90, 209, 0.5);
 }
 
 button, input:focus {
@@ -43,6 +46,7 @@ button > span {
 	font-size: 2em;
 	vertical-align: top;
 	white-space: pre;
+	text-shadow: 1px 1px 1px rgba(0, 0, 0, 1);
 }
 
 a {

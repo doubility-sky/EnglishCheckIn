@@ -99,7 +99,8 @@ func prepare(querySql string) (stmt *sql.Stmt, err error) {
 }
 
 // sql wrapper
-func QueryTable(selects []string, from string, where []*KeyValue, group []string, having string, order []string) (err error, results *sql.Rows) {
+func QueryTable(selects []string, from string, where []*KeyValue, group []string, 
+				having string, order []string) (results *sql.Rows, err error) {
 	whereStatements := make([]string, 0)
 	values := make([]interface{}, 0)
 
@@ -146,7 +147,7 @@ func QueryTable(selects []string, from string, where []*KeyValue, group []string
 	return
 }
 
-func InsertTable(table string, params map[string]interface{}, update map[string]interface{}) (err error, id int64) {
+func InsertTable(table string, params map[string]interface{}, update map[string]interface{}) (id int64, err error) {
 	columns := make([]string, 0)
 	placeholders := make([]string, 0)
 	updateStatements := make([]string, 0)

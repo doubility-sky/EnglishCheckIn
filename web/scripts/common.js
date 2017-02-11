@@ -40,3 +40,11 @@ function getCookieValue(name)
 	    return null;
     }
 }
+
+function deleteCookieValue(name)
+{
+	var value = getCookieValue(name)
+	if (value != null) {
+		document.cookie = name + "=" + value + ";max-age=-1"
+	}
+}

@@ -21,20 +21,25 @@
 <body>
 	<div class="main">
 		<div class="content">
+
+			<!-- weixin share image -->
 			<div hidden="hidden">
 				<img id="share_wx_logo" src="/image/big_logo.png" height="0" width="0" />
 			</div>
 
+            <!-- header -->
 			<div class="header big">
 				<img src="/image/middle_logo.png"/>
-				<h1>English Check-in</h1>
+				<h1>Plan Check-in</h1>
 				<hr class="small" style="margin-top: 1em;">
 			</div>
 
+            <!-- middle placehoder div -->
 			<div id="div_login_placeholder"></div>
 
+            <!-- middle begin -->
 			<div class="center login">
-				<div style="margin-top: 10%">
+				<div style="margin-top: 10%; ">
 					<select id="login_account" >
 						<option value="0">Choose user...</option>
 					</select>
@@ -55,14 +60,17 @@
 					</button>
 				</div>
 			</div>
+            <!-- middle end -->
 		</div>
 	</div>
 
+	<!-- footer -->
 	<div class="center footer">
 		<hr>
 		<p style="margin-top: 0.2em; font-size: 1.5em">Build by handsome programers in 2017</p>
 	</div>
 
+	<!-- cover layer begin -->
 	<div class="center cover" id="div_new" hidden="hidden">
 		<div class="cover_sub" id="div_login_new">
 			<input type="text" class="center" id="new_account" name="new_account" placeholder="Enter Your Name" maxlength=10></input>
@@ -81,6 +89,7 @@
 			</button>
 		</div>
 	</div>
+	<!-- cover layer end -->
 </body>
 
 <script type="text/javascript">

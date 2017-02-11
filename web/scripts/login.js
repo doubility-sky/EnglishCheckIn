@@ -8,14 +8,14 @@ function setRegisterTips(tips) {
 
 function login() {
 	var select = document.getElementById('login_account')
-	var id = select.value
-	if (id == 0) {
+	var uid = select.value
+	if (uid == '0') {
 		setLoginTips("Please choose or sign up one account!")
 		return
 	}
 
 	var data = new Object()
-	data["user_id"] = id
+	data["user_id"] = uid
 	ajaxPost("/login", JSON.stringify(data), function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			if (xmlhttp.responseText[0] == "<") {
@@ -34,6 +34,14 @@ function createNewAccount() {
 	var name = document.getElementById('new_account').value
 	if (name == "") {
 		setRegisterTips("Name can't be empty!")
+		return
+	}
+
+	// check special characters
+	var re = new RegExp("[\u0000-\u002F\u003A-\u0040\u005B-\u0060\u007B-\u007F]")
+	var arr = name.match(re)
+	if (arr != null) {
+		setRegisterTips("Name can't contain special character: " + arr[0])
 		return
 	}
 
