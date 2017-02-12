@@ -2,8 +2,16 @@ var _userId, _userIdStr, _userName
 var _now, _nowY, _nowM, _nowDay
 var _userPlans
 
-var _recordTableIdPrefix = 'records_'
-var _recordTableIds = new Object()
+var _RecordTableIdPrefix = 'records_'
+var _recordTableIds = new Array()
+
+var _Month = new Array('January','February','March','April','May','June','July','August','September','October','November','December');
+var _MaxPlansNumber = 10
+
+function gotoHome() {
+    deleteCookieValue('auto_login')
+    window.location.href = '/'
+}
 
 function openCheckIn() {
     document.getElementById('div_check_in').hidden = false
@@ -28,16 +36,147 @@ function openCheckIn() {
     beginSelect.value = _nowDay
     endSelect.value = _nowDay
 }
+
 function closeCheckIn() {
     document.getElementById('div_check_in').hidden = true
 }
+
+// modify plan function
 function openModifyPlans() {
     document.getElementById('div_modify_plans').hidden = false
+
+    var table = document.getElementById('modify_plans')
+    var tableLen = table.rows.length
+    for (i = 0; i < tableLen - 1; i++)
+    {
+        table.deleteRow(1);
+    }
+
+    for (var i in _userPlans) {
+        var userPlan = _userPlans[i]
+
+        var row = table.insertRow()
+
+        var idCell = row.insertCell(0)
+        idCell.innerHTML = userPlan['plan_id']
+        idCell.hidden = true
+        
+        var contentCell = row.insertCell(1)
+        contentCell.setAttribute('class', 'records_table_td')
+        contentCell.innerHTML = '<marquee class="center" scrollamount="10"><span>' + userPlan['content'] + '</span></marquee>'
+        var contentMarquee = contentCell.firstChild
+        judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
+
+        var planCell = row.insertCell(2)
+        planCell.setAttribute('class', 'records_table_td')
+        planCell.innerHTML = '<marquee class="center" scrollamount="10"><span>' + userPlan['plan'] + '</span></marquee>'
+        var planMarquee = planCell.firstChild
+        judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
+
+        var optCell = row.insertCell(3)
+        optCell.innerHTML = '<button class="plan_btn" onclick="deletePlan(this);"><span class="icon-minus"></span></button>'
+    }
+
+    if (table.rows.length > _MaxPlansNumber) {
+        document.getElementById('add_new_plan').disabled = true
+    }
 }
+
 function closeModifyPlans() {
     document.getElementById('div_modify_plans').hidden = true
 }
 
+function addPlan() {
+    var table = document.getElementById('modify_plans')
+    
+    var row = table.insertRow()
+    
+    var idCell = row.insertCell(0)
+    idCell.innerHTML = "0"
+    idCell.hidden = true
+    
+    var contentCell = row.insertCell(1)
+    contentCell.innerHTML = '<input type="text" class="modify_input center" name="modify_text" placeholder="e.g. 阅读5篇" maxlength="20" />'
+    
+    var planCell = row.insertCell(2)
+    planCell.innerHTML = '<input type="text" class="modify_input center" name="modify_text" placeholder="e.g. 每周5次" maxlength="20" />'
+    
+    var optCell = row.insertCell(3)
+    optCell.innerHTML = '<button class="plan_btn" onclick="deletePlan(this);"><span class="icon-minus"></span></button>'
+
+    if (table.rows.length > _MaxPlansNumber) {
+        document.getElementById('add_new_plan').disabled = true
+    }
+}
+
+function deletePlan(btn) {
+    var tr = btn.parentNode.parentNode
+    tr.parentNode.removeChild(tr)
+    document.getElementById('add_new_plan').disabled = false
+}
+
+function judgeMarqueeStop(marquee, width, maxWidth) {
+    if (width < maxWidth) {
+        marquee.stop()
+    }
+}
+
+function getPlanText(node) {
+    while (node.children.length > 0 && node.name != 'modify_text') {
+        node = node.firstChild
+    }
+ 
+    if (node.name == 'modify_text') {
+        ret = node.value
+    } else {
+        ret = node.innerHTML
+    }
+    return ret.replace(/(^\s*)|(\s*$)/g, "");
+}
+
+function modifyPlans() {
+    var table = document.getElementById('modify_plans')
+    var newPlans = new Array()
+
+    for (var i = 1; i < table.rows.length; i++) {
+        var tr = table.rows[i]
+
+        var plan = new Object()
+        plan['plan_id'] = getPlanText(tr.children[0])
+        plan['content'] = getPlanText(tr.children[1])
+        plan['plan'] = getPlanText(tr.children[2])
+
+        if (plan['content'] != '' && plan['plan'] != '') {
+            newPlans.push(plan)
+        }
+    }
+
+    changedPlans = new Array()
+    var oldIndex = 0
+    var newIndex = 0
+    for ( ; oldIndex < _userPlans.length; oldIndex++) {
+        if (newIndex >= newPlans.length) {
+            changedPlans = changedPlans.concat(_userPlans.slice(oldIndex))
+            break
+        }
+
+        if (_userPlans[oldIndex]['plan_id'] == newPlans[newIndex]['plan_id']) {
+            newIndex++
+        } else {
+            changedPlans.push(_userPlans[oldIndex])
+        }
+    }
+
+    changedPlans = changedPlans.concat(newPlans.slice(newIndex))
+
+    if (changedPlans.length == 0) {
+        closeModifyPlans()
+    } else {
+        modify(changedPlans)
+    }
+}
+
+// export function
 function TableToCSVArray(tableid, firstRow, firstColumn) {
     var tb = document.getElementById(tableid)
     if (tb == null || tb.rows.length == 0) {
@@ -54,8 +193,10 @@ function TableToCSVArray(tableid, firstRow, firstColumn) {
     for (var i = minRow; i < rows; i++) {
         var columnArray = new Array()
         for (var j = minColumns; j < columns; j++) {
-            tdValue = tb.rows[i].cells[j].innerHTML
-            columnArray.push(tdValue)
+            var tdValue = tb.rows[i].cells[j].innerHTML
+
+            // escape CSV special character(, and "): add qoutation around tdValue, replace " to "" 
+            columnArray.push('"' + tdValue.replace(/"/g,'""') + '"')
         }
         
         var s = columnArray.join(',')
@@ -63,16 +204,29 @@ function TableToCSVArray(tableid, firstRow, firstColumn) {
     }
 
     return rowArray
-    var str = rowArray.join('\n')
-    return str
 } 
 
 function clickDownload(aLink) {
+    aLink.removeAttribute('download')
+    aLink.href = 'javascript:void(0);'
+
+    if (_recordTableIds.length == 0) {
+        return
+    }
+
+    var queryDate = _recordTableIds[0]['date']
+    var days = (new Date(queryDate.getFullYear(), queryDate.getMonth() + 1, 0)).getDate()
+
+    // one blank line, will see more clearly in CSV
+    var blankArray = new Array()
+    for (var m = 0; m < days; m++) {
+        blankArray.push('')
+    }
+    var blankCSVLine = blankArray.join(',')
 
     var totalArray = new Array()
-
-    for (var i in _recordTableIds) {
-        var firstRow = (i == 0)
+    for (var i = 1; i < _recordTableIds.length; i++) {
+        var firstRow = (i == 1)
 
         var name = _recordTableIds[i]['name']
         var userTableIds = _recordTableIds[i]['ids']
@@ -83,7 +237,7 @@ function clickDownload(aLink) {
 
             var arr = TableToCSVArray(userTableIds[j], firstRow, firstColumn)
             for (var k in arr) {
-                if (userArray[k] == null || userArray[k] == undefined) {
+                if (userArray[k] == undefined) {
                     userArray[k] = new Array()
                     userArray[k].push((firstRow && firstColumn && k == 0) ? 'Name' : name)
                 }
@@ -95,19 +249,23 @@ function clickDownload(aLink) {
             totalArray.push(userArray[row].join(','))
         }
 
+        // add one blank line
+        totalArray.push(blankCSVLine)
+
         firstRow = false
     }
 
     var str = totalArray.join('\n')
-
-    if (str == null || str == '') {
+    if (str == '') {
         return
     }
 
-    str =  encodeURIComponent(str)
+    str = encodeURIComponent(str)
+    aLink.download = queryDate.getFullYear() + '_' + (queryDate.getMonth() + 1) + "_record.csv"
     aLink.href = 'data:text/csv;charset=utf-8,\ufeff'+str
 }
 
+// query function
 function createRecordTable(id, data, begin, len) {
     var table = document.createElement('table')
     table.id = id
@@ -117,7 +275,7 @@ function createRecordTable(id, data, begin, len) {
     table.setAttribute('style', 'width:' + width + '%;')
 
     // create head
-    var row = table.insertRow(0)
+    var row = table.insertRow()
     for (var i = -1; i < len; i++) {
         var cell = row.insertCell(i+1)
         var text
@@ -133,7 +291,7 @@ function createRecordTable(id, data, begin, len) {
     }
 
     for (var i = 0; i < data.length; i++) {
-        var row = table.insertRow(i+1)
+        var row = table.insertRow()
 
         var rowData = data[i]
         for (var j = 0; j < rowData.length; j++) {
@@ -146,10 +304,10 @@ function createRecordTable(id, data, begin, len) {
     return table
 }
 
-function createRecordName(value) {
+function createRecordTitle(name, month) {
     var h3 = document.createElement('h3')
     h3.setAttribute('class', 'records_name')
-    h3.innerHTML = value
+    h3.innerHTML = 'Records of ' + name + ' in ' + _Month[month]
     return h3
 }
 
@@ -166,9 +324,9 @@ function createRecordSplit() {
     return hr
 }
 
-function resetRecords(userId, name, date, records, plans) {
+function resetRecords(userId, name, date, records) {
     var divRecord = document.getElementById('div_record')
-    if (records == null || records == undefined) {
+    if (records == undefined) {
         divPlans.hidden = true
         return
     }
@@ -178,13 +336,21 @@ function resetRecords(userId, name, date, records, plans) {
     var divRecordSub = document.getElementById('div_record_sub')
     divRecordSub.innerHTML = ''
 
-    var plansLen = 0
-    for (var i in plans) {
-        plansLen += 1
+    // query date
+    var queryDate = new Date()
+    queryDate.setTime((parseInt(date) + queryDate.getTimezoneOffset() * 60) * 1000)
+    var minDay = 1
+    var maxDay = (new Date(queryDate.getFullYear(), queryDate.getMonth() + 1, 0)).getDate()
+
+    // no record
+    var noRecord = true
+    for (var i in records) {
+        noRecord = false
+        break
     }
-    if (plansLen == 0) {
+    if (noRecord) {
         if (userId != '0') {
-            var n = createRecordName(name)
+            var n = createRecordTitle(name, queryDate.getMonth())
             divRecordSub.appendChild(n)
         }
         var t = createRecordTips('Come on! Just persevere you are the best!  ^_^')
@@ -194,34 +360,30 @@ function resetRecords(userId, name, date, records, plans) {
         divRecordSub.appendChild(s)
 
         document.getElementById('export_query').disabled = true
-        document.getElementById('export_query_a').setAttribute("onclick", "return false;")
+        document.getElementById('export_query_a').setAttribute('onclick', 'return false;')
         document.getElementById('export_record').disabled = true
-        document.getElementById('export_record_a').setAttribute("onclick", "return false;")
+        document.getElementById('export_record_a').setAttribute('onclick', 'return false;')
         return
     }
 
-    // compute days in date
-    var queryDate = new Date()
-    queryDate.setTime((parseInt(date) + queryDate.getTimezoneOffset() * 60) * 1000)
-    var minDay = 1
-    var maxDay = (new Date(queryDate.getFullYear(), queryDate.getMonth() + 1, 0)).getDate()
     // put origin data into set
     var completedSet = new Object()
-    for (var key in plans) {
+    for (var key in records) {
+        var record = records[key]
+
         var userPlanObj = new Object()
 
-        var userPlan = plans[key]
-        for (var i in userPlan) {
-            var planId = userPlan[i]['plan_id']
-            userPlanObj[planId] = new Object()
-        }
-        
-        var record = records[key]
-        if (record != null && record != undefined) {
-            for (var i in record) {
-                var planId = record[i]['plan_id']
-                var checkinTime = parseInt(record[i]['checkin_time'])
+        for (var i in record) {
+            var oneRecord = record[i]
+            var planId = oneRecord['plan_id']
+            if (userPlanObj[planId] == undefined) {
+                userPlanObj[planId] = new Object()
+                userPlanObj[planId]['content'] = oneRecord['content']   // for show
+                userPlanObj[planId]['plan'] = oneRecord['plan']         // not use
+            }
 
+            var checkinTime = parseInt(oneRecord['checkin_time'])
+            if (checkinTime > 0) {
                 var d = new Date()
                 d.setTime((checkinTime + queryDate.getTimezoneOffset() * 60) * 1000)
                 var day = d.getDate()
@@ -234,7 +396,9 @@ function resetRecords(userId, name, date, records, plans) {
 
     // algin data from set to array
     var showData = new Array()
-    for (var key in plans) {
+    for (var key in completedSet) {
+        var userPlanObj = completedSet[key]
+
         var showUser = new Object()
 
         var userName = key.split(',')[1]
@@ -243,15 +407,12 @@ function resetRecords(userId, name, date, records, plans) {
         var showRecord = new Array()
         var noRecord = true
 
-        var userPlanObj = completedSet[key]
-        var userPlan = plans[key]
-        for (var i in userPlan) {
-            var planId = userPlan[i]['plan_id']
+        for (var planId in userPlanObj) {
             var planSet = userPlanObj[planId]
 
             var onePlanRecord = new Array()
 
-            var planName = userPlan[i]['content']
+            var planName = planSet['content']
             onePlanRecord.push(planName)
 
             for (var j = minDay; j <= maxDay; j++) {
@@ -275,11 +436,15 @@ function resetRecords(userId, name, date, records, plans) {
 
     // split array to show data, create table and show it.
     _recordTableIds = new Array()
+    _recordTableIds.push({
+        'date': queryDate
+    })
+
     var tableNumber = 0
     for (var i in showData) {
         var showUser = showData[i]
 
-        var n = createRecordName(showUser['name'])
+        var n = createRecordTitle(showUser['name'], queryDate.getMonth())
         divRecordSub.appendChild(n)
 
         var showRecord = showUser['record']
@@ -300,7 +465,7 @@ function resetRecords(userId, name, date, records, plans) {
                     partRecord.push(onePart)
                 }
 
-                var tbId = _recordTableIdPrefix + tableNumber
+                var tbId = _RecordTableIdPrefix + tableNumber
                 tableNumber += 1
                 tableIds.push(tbId)
 
@@ -319,14 +484,14 @@ function resetRecords(userId, name, date, records, plans) {
 
 
     document.getElementById('export_query').disabled = false
-    document.getElementById('export_query_a').setAttribute("onclick", "clickDownload(this);")
+    document.getElementById('export_query_a').setAttribute('onclick', 'clickDownload(this);')
     document.getElementById('export_record').disabled = false
-    document.getElementById('export_record_a').setAttribute("onclick", "clickDownload(this);")
+    document.getElementById('export_record_a').setAttribute('onclick', 'clickDownload(this);')
 }
 
 function resetPlans(userId, name, plans) {
     var divPlans = document.getElementById('div_plans')
-    if (plans == null || plans == undefined) {
+    if (plans == undefined) {
         divPlans.hidden = true
         return
     }
@@ -352,34 +517,47 @@ function resetPlans(userId, name, plans) {
 
     // set name
     if (showUserName != null && showUserName != undefined) {
-        document.getElementById('plans_name').innerHTML = showUserName
+        document.getElementById('plans_name').innerHTML = 'Plans of ' + showUserName
     }
 
     // add new rows
-    if (showObj != null && showObj != undefined) {
+    if (showObj != undefined && showObj.length > 0) {
         for (var i in showObj) {
-            var row = table.insertRow(parseInt(i)+1)
+            var row = table.insertRow()
             var contentCell = row.insertCell(0)
             contentCell.innerHTML = showObj[i]['content']
             var planCell = row.insertCell(1)
             planCell.innerHTML = showObj[i]['plan']
         }
+        table.hidden = false
+    } else {
+        table.hidden = true
     }
 
     // disable 'modify' button when query user is not _userId
     if (showUserId == _userIdStr) {
-        _userPlans = showObj
+        _userPlans = (showObj == undefined) ? new Array() : showObj
         document.getElementById('open_operate_plans').disabled = false
     } else {
         document.getElementById('open_operate_plans').disabled = true
     }
 }
 
-// click action
-function gotoHome() {
-    deleteCookieValue('auto_login')
-    window.location.href = '/'
+// ajax
+function modify(plans) {
+    var data = new Object()
+    data['user_id'] = _userIdStr
+    data['data'] = plans
+
+    var xmlhttp = newXmlhttp()
+    ajaxPost(xmlhttp, '/modify', JSON.stringify(data), function() {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            closeModifyPlans()
+            query()
+        }
+    })
 }
+
 
 function query() {
     var queryAccount = document.getElementById('query_account')
@@ -392,37 +570,55 @@ function query() {
     var queryUTC = parseInt(queryDate.getTime() / 1000 - queryDate.getTimezoneOffset() * 60)
 
     var data = new Object()
-    data['user_id'] = uid.toString()
+    data['user_id'] = uid
     data['name'] = name
     data['date'] = queryUTC.toString()
-    ajaxPost('/query', JSON.stringify(data), function() {
+
+    var xmlhttp = newXmlhttp()
+    ajaxPost(xmlhttp, '/query', JSON.stringify(data), function() {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
             var obj = JSON.parse(xmlhttp.responseText)
             if (obj.errorno != 0) {
                 alert(obj.msg)
             } else {
                 resetPlans(obj.user_id, obj.name, obj.plans)
-                resetRecords(obj.user_id, obj.name, obj.date, obj.records, obj.plans)
+                resetRecords(obj.user_id, obj.name, obj.date, obj.records)
             }
         }
     })
+
+    // if query all, refresh user list
+    if (uid == "0") {
+        getUserList("0")
+    }
 }
 
-// ajax
-function getUserList() {
-    ajaxPost('/userlist', null, function() {
+function getUserList(defaultValue) {
+    if (defaultValue == undefined) {
+        defaultValue = _userId
+    }
+
+    var xmlhttp = newXmlhttp()
+    ajaxPost(xmlhttp, '/userlist', null, function() {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
             var obj = JSON.parse(xmlhttp.responseText)
             if (obj.errorno != 0) {
                 setLoginTips(obj.msg)
             } else {
                 var accountSelect = document.getElementById('query_account')
+                accountSelect.innerHTML = ""
+                var allOpt = createOption("0", "All...")
+                accountSelect.add(allOpt, null)
+
                 for (var i = 0; i < obj.data.length; i++) {
                     var user = obj.data[i]
                     var opt = createOption(user.user_id, user.name)
                     accountSelect.add(opt, null)
                 }
-                accountSelect.value = _userId
+                accountSelect.value = defaultValue
+
+                // auto query user self
+                query()
             }
         }
     })

@@ -1,23 +1,22 @@
-var xmlhttp;
-function ajaxGet(url, fun) {
+function newXmlhttp() {
+	var xmlhttp
 	if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
 		xmlhttp = new XMLHttpRequest();
 	} else { // code for IE6, IE5
 		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 	}
-	
+
+	return xmlhttp
+}
+
+
+function ajaxGet(xmlhttp, url, fun) {	
 	xmlhttp.onreadystatechange = fun
 	xmlhttp.open("GET", url, true);
 	xmlhttp.send();
 }
 
-function ajaxPost(url, data, fun) {
-	if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
-		xmlhttp = new XMLHttpRequest();
-	} else { // code for IE6, IE5
-		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-	}
-	
+function ajaxPost(xmlhttp, url, data, fun) {
 	xmlhttp.onreadystatechange = fun
 	xmlhttp.open("POST", url, true);
 	xmlhttp.setRequestHeader("Content-type","application/json");

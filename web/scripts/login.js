@@ -16,7 +16,9 @@ function login() {
 
 	var data = new Object()
 	data["user_id"] = uid
-	ajaxPost("/login", JSON.stringify(data), function() {
+	
+	var xmlhttp = newXmlhttp()
+	ajaxPost(xmlhttp, "/login", JSON.stringify(data), function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			if (xmlhttp.responseText[0] == "<") {
 				document.write(xmlhttp.responseText)
@@ -47,7 +49,9 @@ function createNewAccount() {
 
 	var data = new Object()
 	data["name"] = name
-	ajaxPost("/register", JSON.stringify(data), function() {
+
+	var xmlhttp = newXmlhttp()
+	ajaxPost(xmlhttp, "/register", JSON.stringify(data), function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			if (xmlhttp.responseText[0] == "<") {
 				document.write(xmlhttp.responseText)
@@ -71,7 +75,8 @@ function closeCreateDiv() {
 }
 
 function getUserList() {
-	ajaxPost("/userlist", null, function() {
+	var xmlhttp = newXmlhttp()
+	ajaxPost(xmlhttp, "/userlist", null, function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 			var obj = JSON.parse(xmlhttp.responseText)
 			if (obj.errorno != 0) {

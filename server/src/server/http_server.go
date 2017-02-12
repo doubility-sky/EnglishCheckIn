@@ -173,6 +173,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 	http.SetCookie(w, userIdCookie)
 
 	sendContentPage(w, uid, name)
+	response = nil
 }
 
 func register(w http.ResponseWriter, req *http.Request) {
@@ -244,6 +245,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 	http.SetCookie(w, userIdCookie)
 
 	sendContentPage(w, uid, name)
+	response = nil
 }
 
 func query(w http.ResponseWriter, req *http.Request) {
@@ -268,7 +270,7 @@ func query(w http.ResponseWriter, req *http.Request) {
 
 	userId, _ := values["user_id"].(string)
 	uid, _ := strconv.ParseInt(userId, 10, 64)
-	
+
 	name, _ := values["name"].(string)
 
 	date, _ := values["date"].(string)
@@ -339,7 +341,7 @@ func query(w http.ResponseWriter, req *http.Request) {
 			var recordUserId, planId, checkInTime, recordTime int64
 			var recordUserName, content, plan string
 			if err := records.Scan(&recordUserId, &recordUserName, &planId, &content, &plan, &checkInTime, &recordTime); err != nil {
-				logger.Println("Scan records fail! id:" + userId)
+				logger.Println(fmt.Sprintf("Scan records fail! id:%s err:%s", userId, err.Error()))
 				continue
 			}
 
@@ -395,23 +397,32 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	plans, _ := values["data"].([]map[string]interface{})
+	plans, _ := values["data"].([]interface{})
 	if plans == nil {
 		response["errorno"] = -1
 		response["msg"] = "No plan is changed!"
 		return
 	}
 
-	for _, v := range plans {
-		opt, _ := v["opt"].(string)
-		if opt == "DEL" {
-			planId, _ := v["plan_id"].(float64)
-			if e := deletePlan(uid, int64(planId)); e != nil {
+	for _, plan := range plans {
+		p, _ := plan.(map[string]interface{})
+		if p == nil {
+			continue
+		}
+
+		planId, _ := p["plan_id"].(string)
+		pid, _ := strconv.ParseInt(planId, 10, 64)
+		if pid > 0 {
+			if e := deletePlan(uid, pid); e != nil {
 				logger.Println(e.Error())
 			}
-		} else if opt == "ADD" {
-			content, _ := v["content"].(string)
-			plan, _ := v["plan"].(string)
+		} else {
+			content, _ := p["content"].(string)
+			plan, _ := p["plan"].(string)
+			if content == "" || plan == "" {
+				logger.Println("modifyPlans add error. content or plan is nil.", p)
+				continue
+			}
 
 			if _, e := insertPlan(uid, content, plan); e != nil {
 				logger.Println(e.Error())
@@ -578,6 +589,10 @@ func parseHttpParamsToJson(req *http.Request) (values map[string]interface{}) {
 }
 
 func responseJsonToString(response map[string]interface{}) string {
+	if response == nil {
+		return ""
+	}
+
 	if msg, err := json.Marshal(response); err != nil {
 		logger.Println("responseJsonToString error: " + err.Error())
 		return "{}"
@@ -629,7 +644,7 @@ func queryPlans(userId int64) (results *sql.Rows, err error) {
 	where = append(where, &common.KeyValue{"NOW() between `begin_time` and `end_time`", nil})
 
 	results, err = common.QueryTable([]string{"a.`user_id`", "b.`name`", "a.`plan_id`", "a.`content`", "a.`plan`"},
-		"`tbl_plans` a LEFT JOIN `tbl_user` b ON a.`user_id` = b.`user_id`", where, nil, "", 
+		"`tbl_plans` a LEFT JOIN `tbl_user` b ON a.`user_id` = b.`user_id`", where, nil, "",
 		[]string{"a.`user_id`", "a.`plan_id`"})
 	return
 }
@@ -642,17 +657,20 @@ func queryRecords(userId, beginTime, endTime int64) (results *sql.Rows, err erro
 
 	if beginTime > 0 && endTime > 0 {
 		where = append(where, &common.KeyValue{
-			fmt.Sprintf("`checkin_time` between FROM_UNIXTIME(%d) and FROM_UNIXTIME(%d)", beginTime, endTime),
+			fmt.Sprintf("(a.`end_time` >= FROM_UNIXTIME(%d) and a.`begin_time` <= FROM_UNIXTIME(%d))", beginTime, endTime),
+			nil})
+		where = append(where, &common.KeyValue{
+			fmt.Sprintf("(c.`checkin_time` IS NULL OR c.`checkin_time` between FROM_UNIXTIME(%d) and FROM_UNIXTIME(%d))", beginTime, endTime),
 			nil})
 	}
 
 	results, err = common.QueryTable(
-		[]string{"a.`user_id`", "c.`name`", "a.`plan_id`", "b.`content`", "b.`plan`",
-			"UNIX_TIMESTAMP(a.`checkin_time`) as `checkin_time`",
-			"UNIX_TIMESTAMP(a.`record_time`) as `record_time`"},
-		"`tbl_records` a LEFT JOIN `tbl_plans` b ON a.`plan_id` = b.`plan_id` LEFT JOIN `tbl_user` c ON a.`user_id` = c.`user_id`",
+		[]string{"a.`user_id`", "b.`name`", "a.`plan_id`", "a.`content`", "a.`plan`",
+			"IFNULL(UNIX_TIMESTAMP(c.`checkin_time`), 0) as `checkin_time`",
+			"IFNULL(UNIX_TIMESTAMP(c.`record_time`), 0) as `record_time`"},
+		"`tbl_plans` a LEFT JOIN `tbl_user` b ON a.`user_id` = b.`user_id` LEFT JOIN `tbl_records` c ON a.`user_id` = c.`user_id` AND a.`plan_id` = c.`plan_id`",
 		where, nil, "",
-		[]string{"a.`user_id`", "a.`plan_id`", "a.`checkin_time`"})
+		[]string{"a.`user_id`", "a.`plan_id`", "c.`checkin_time`"})
 	return
 }
 
@@ -702,7 +720,7 @@ func deletePlan(userId, planId int64) (err error) {
 		return
 	}
 
-	err = common.UpdateTable("`tbl_plans`", map[string]interface{}{"`end_time`": "NOW()"},
+	err = common.UpdateTable("`tbl_plans`", map[string]interface{}{"`end_time`=DATE_SUB(NOW(), INTERVAL 1 SECOND)": nil},
 		[]*common.KeyValue{
 			&common.KeyValue{"plan_id", planId},
 			&common.KeyValue{"user_id", userId},

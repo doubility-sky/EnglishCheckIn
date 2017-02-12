@@ -57,7 +57,7 @@
                                 <span class="icon-search"></span>
                                 <span>Query</span>
                             </button>
-                            <a href="#" download="English_Record.csv" id="export_query_a" onclick="return false;" >
+                            <a href="javascript:void(0);" id="export_query_a" onclick="return false;" >
                                 <button class="query_btn" id="export_query" disabled="disabled">
                                     <span class="icon-folder-open"></span>
                                     <span>Export</span>
@@ -74,10 +74,10 @@
 
             <div class="center div_block" id="div_plans">
                 <div class="div_sub">
-                    <h3 id="plans_name">{{.Name}}</h3>
+                    <h3 id="plans_name">Plans of {{.Name}}</h3>
                 </div>
                 <div class="div_sub">
-                    <table class="center" style="table-layout: fixed;" id="plans">
+                    <table class="center" style="table-layout: fixed;" id="plans" hidden="hidden">
                         <th style="width: 50%;">Name</th>
                         <th style="width: 50%;">Plan</th>
                     </table>
@@ -120,7 +120,7 @@
                     <h2>Modify Plans</h2>                
                 </div>
                 <div class="content_cover_sub_head_right">
-                    <button class="plan_btn" id="add_new_plan" >
+                    <button class="plan_btn" id="add_new_plan" onclick="addPlan();" >
                         <span class="icon-plus"></span>
                         <span> New</span>
                     </button>    
@@ -130,7 +130,7 @@
             <hr class="plan_hr">
 
             <div class="center plan_scroll">
-                <table class="center plan_table"> 
+                <table class="center plan_table" id="modify_plans"> 
                     <th style="width: 40%;">Name</th>
                     <th style="width: 40%;">Plan</th>
                     <th style="width: 20%">Operate</th>
@@ -190,10 +190,10 @@
                     </tr>
                     <tr>
                         <td>
-                            <input type="text" class="modify_input center" placeholder="e.g. 阅读5篇" maxlength="10" />
+                            <input type="text" class="modify_input center" placeholder="e.g. 阅读5篇" maxlength="20" />
                         </td>
                         <td>
-                            <input type="text" class="modify_input center" placeholder="e.g. 每周5次" maxlength="10" />
+                            <input type="text" class="modify_input center" placeholder="e.g. 每周5次" maxlength="20" />
                         </td>
                         <td>
                             <button class="plan_btn">
@@ -207,11 +207,11 @@
             <hr class="plan_hr">
 
             <div class="left plans_bottom">
-                <button class="plan_big_btn content_cover_sub_bottom_left" >
+                <button class="plan_big_btn content_cover_sub_bottom_left" onclick="modifyPlans();" >
                     <span class="icon-checkmark"></span>
                     <span> Confirm</span>
                 </button>
-                <button class="plan_big_btn content_cover_sub_bottom_right" onclick="closeModifyPlans();">
+                <button class="plan_big_btn content_cover_sub_bottom_right" onclick="closeModifyPlans();" >
                     <span class="icon-cross"></span>
                     <span> Cancel</span>
                 </button>

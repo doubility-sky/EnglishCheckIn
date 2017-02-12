@@ -163,8 +163,12 @@ func InsertTable(table string, params map[string]interface{}, update map[string]
 
 	if update != nil {
 		for k, v := range update {
-			values = append(values, v)
-			updateStatements = append(updateStatements, fmt.Sprintf("%s=?", k))
+			if v != nil {
+				values = append(values, v)
+				updateStatements = append(updateStatements, fmt.Sprintf("%s=?", k))
+			} else {
+				updateStatements = append(updateStatements, k)
+			}
 		}
 	}
 
@@ -202,8 +206,12 @@ func UpdateTable(table string, update map[string]interface{}, where []*KeyValue)
 	values := make([]interface{}, 0)
 
 	for k, v := range update {
-		values = append(values, v)
-		updateStatements = append(updateStatements, fmt.Sprintf("%s=?", k))
+		if v != nil {
+			values = append(values, v)
+			updateStatements = append(updateStatements, fmt.Sprintf("%s=?", k))
+		} else {
+			updateStatements = append(updateStatements, k)
+		}
 	}
 
 	if where != nil {
