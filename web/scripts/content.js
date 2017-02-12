@@ -18,6 +18,7 @@ function openCheckIn() {
     document.getElementById('div_check_in').hidden = false
 
     // init check in day
+    document.getElementById('check_in_month').innerHTML = _nowY + '年' + (_nowM + 1) + '月'
     var beginSelect = document.getElementById('check_in_date_begin')
     var endSelect = document.getElementById('check_in_date_end')
 
@@ -33,7 +34,6 @@ function openCheckIn() {
             minDay = minDay + 1
         } while(minDay <= maxDay)
     }
-        
     beginSelect.value = _nowDay
     endSelect.value = _nowDay
 
@@ -59,17 +59,19 @@ function openCheckIn() {
         
         var contentCell = row.insertCell(2)
         contentCell.setAttribute('class', 'records_table_td')
-        contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
-            + '<span>' + userPlan['content'] + '</span></marquee>'
-        var contentMarquee = contentCell.firstChild
-        judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
+        // contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+        //     + '<span>' + userPlan['content'] + '</span></marquee>'
+        // var contentMarquee = contentCell.firstChild
+        // judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
+        contentCell.innerHTML = userPlan['content']
 
         var planCell = row.insertCell(3)
         planCell.setAttribute('class', 'records_table_td')
-        planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
-            + '<span>' + userPlan['plan'] + '</span></marquee>'
-        var planMarquee = planCell.firstChild
-        judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
+        // planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+        //     + '<span>' + userPlan['plan'] + '</span></marquee>'
+        // var planMarquee = planCell.firstChild
+        // judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
+        planCell.innerHTML = userPlan['plan']
     }
 
     document.getElementById('all_selected').checked = true
@@ -110,9 +112,9 @@ function changeCheckIn(checked) {
 }
 
 function confirmCheckIn() {
-    var beginTime = document.getElementById('check_in_date_begin').value
-    var endTime = document.getElementById('check_in_date_end').value
-
+    var beginTime = parseInt(document.getElementById('check_in_date_begin').value)
+    var endTime = parseInt(document.getElementById('check_in_date_end').value)
+    
     if (beginTime > _nowDay || endTime > _nowDay) {
         alert('Date exceed today!')
         return
@@ -163,17 +165,19 @@ function openModifyPlans() {
         
         var contentCell = row.insertCell(1)
         contentCell.setAttribute('class', 'records_table_td')
-        contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
-            + '<span>' + userPlan['content'] + '</span></marquee>'
-        var contentMarquee = contentCell.firstChild
-        judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
+        // contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+        //     + '<span>' + userPlan['content'] + '</span></marquee>'
+        // var contentMarquee = contentCell.firstChild
+        // judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
+        contentCell.innerHTML = userPlan['content']
 
         var planCell = row.insertCell(2)
         planCell.setAttribute('class', 'records_table_td')
-        planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
-            + '<span>' + userPlan['plan'] + '</span></marquee>'
-        var planMarquee = planCell.firstChild
-        judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
+        // planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+        //     + '<span>' + userPlan['plan'] + '</span></marquee>'
+        // var planMarquee = planCell.firstChild
+        // judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
+        planCell.innerHTML = userPlan['plan']
 
         var optCell = row.insertCell(3)
         optCell.innerHTML = '<button class="plan_btn" onclick="deletePlan(this);"><span class="icon-minus"></span></button>'
@@ -217,24 +221,24 @@ function deletePlan(btn) {
     document.getElementById('add_new_plan').disabled = false
 }
 
-function judgeMarqueeStop(marquee, width, maxWidth) {
-    if (width < maxWidth) {
-        marquee.stop();
-        marquee.disabled = true;
-    }
-}
+// function judgeMarqueeStop(marquee, width, maxWidth) {
+//     if (width < maxWidth) {
+//         marquee.stop();
+//         marquee.disabled = true;
+//     }
+// }
 
-function startMarquee(marquee) {
-    if (!marquee.disabled) {
-        marquee.start()
-    }
-}
+// function startMarquee(marquee) {
+//     if (!marquee.disabled) {
+//         marquee.start()
+//     }
+// }
 
-function stopMarquee(marquee) {
-    if (!marquee.disabled) {
-        marquee.stop()
-    }
-}
+// function stopMarquee(marquee) {
+//     if (!marquee.disabled) {
+//         marquee.stop()
+//     }
+// }
 
 function getPlanText(node) {
     while (node.children.length > 0 && node.name != 'modify_text') {
@@ -598,10 +602,12 @@ function resetRecords(userId, name, date, records) {
     }
 
 
-    document.getElementById('export_query').disabled = false
-    document.getElementById('export_query_a').setAttribute('onclick', 'clickDownload(this);')
-    document.getElementById('export_record').disabled = false
-    document.getElementById('export_record_a').setAttribute('onclick', 'clickDownload(this);')
+    if (isPC()) {
+        document.getElementById('export_query').disabled = false
+        document.getElementById('export_query_a').setAttribute('onclick', 'clickDownload(this);')
+        document.getElementById('export_record').disabled = false
+        document.getElementById('export_record_a').setAttribute('onclick', 'clickDownload(this);')
+    }
 }
 
 function resetPlans(userId, name, plans) {
@@ -645,16 +651,18 @@ function resetPlans(userId, name, plans) {
             idCell.hidden = true
 
             var contentCell = row.insertCell(1)
-            contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
-                + '<span>' + showObj[i]['content'] + '</span></marquee>'
-            var contentMarquee = contentCell.firstChild
-            judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
+            // contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+            //     + '<span>' + showObj[i]['content'] + '</span></marquee>'
+            // var contentMarquee = contentCell.firstChild
+            // judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
+            contentCell.innerHTML = showObj[i]['content']
 
             var planCell = row.insertCell(2)
-            planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
-                + '<span>' + showObj[i]['plan'] + '</span></marquee>'
-            var planMarquee = planCell.firstChild
-            judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
+            // planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+            //     + '<span>' + showObj[i]['plan'] + '</span></marquee>'
+            // var planMarquee = planCell.firstChild
+            // judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
+            planCell.innerHTML = showObj[i]['plan']
         }
         table.hidden = false
     } else {

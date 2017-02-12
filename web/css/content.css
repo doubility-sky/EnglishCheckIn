@@ -145,6 +145,7 @@ button.query_btn {
 
 #plans {
 	width: 100%;
+	padding: 1px;
 }
 
 /* modify plan */

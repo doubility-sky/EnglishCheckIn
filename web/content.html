@@ -2,6 +2,10 @@
 <html>
 <head>
     <title>English Check-in System</title>
+    
+    <!-- <meta name="viewport" content="maximum-scale=1.0,user-scalable=no" /> -->
+    <meta content="telephone=no" name="format-detection" /> 
+    
     <link rel="icon" type="image/x-icon" href="/image/favicon.ico" media="all" />
 
     <link rel="stylesheet" type="text/css" href="/css/common.css">
@@ -77,9 +81,9 @@
                     <h3 id="plans_name">Plans of {{.Name}}</h3>
                 </div>
                 <div class="div_sub">
-                    <table class="center" style="table-layout: fixed;" id="plans">
-                        <th style="width: 50%;">Name</th>
-                        <th style="width: 50%;">Plan</th>
+                    <table class="center" style="table-layout: fixed;" id="plans" cellspacing="10">
+                        <th style="width: 50%;font-size: 1.3em;">Name</th>
+                        <th style="width: 50%;font-size: 1.3em;">Plan</th>
                         <tr>
                             <td>听力5篇</td>
                             <td>每周5次</td>
@@ -99,7 +103,7 @@
 
                 </div>
                 <a href="#" download="English_Record.csv" id="export_record_a" onclick="return false;">
-                    <button class="content_common_btn" id="export_record" >
+                    <button class="content_common_btn" id="export_record" disabled="disabled" >
                         <span class="icon-folder-open"></span>
                         <span> Export  </span>
                     </button>
@@ -188,7 +192,7 @@
                     <h2>Check In</h2>
                 </div>
                 <div class="content_cover_sub_head_middle">
-                    <span>2017年12月</span> 
+                    <span id="check_in_month">2017年12月</span> 
                     <select class="date" id="check_in_date_begin"></select>
                     <span>-</span>
                     <select class="date" id="check_in_date_end"></select>
