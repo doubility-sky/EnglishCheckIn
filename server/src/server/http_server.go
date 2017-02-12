@@ -414,7 +414,7 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 		pid, _ := strconv.ParseInt(planId, 10, 64)
 		if pid > 0 {
 			if e := deletePlan(uid, pid); e != nil {
-				logger.Println(e.Error())
+				logger.Println("Update plan fail:", e.Error())
 			}
 		} else {
 			content, _ := p["content"].(string)
@@ -425,7 +425,7 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 			}
 
 			if _, e := insertPlan(uid, content, plan); e != nil {
-				logger.Println(e.Error())
+				logger.Println("Insert plan fail:", e.Error())
 			}
 		}
 	}
@@ -461,21 +461,14 @@ func checkIn(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	records, _ := values["data"].(map[string]interface{})
-	if records == nil {
-		response["errorno"] = -1
-		response["msg"] = "No checkIn!"
-		return
-	}
+	beignTime, _ := values["begin_time"].(string)
+	begin, _ := strconv.ParseInt(beignTime, 10, 64)
+	endTime, _ := values["end_time"].(string)
+	end, _ := strconv.ParseInt(endTime, 10, 64)
+	planIds, _ := values["plan_ids"].([]interface{})
 
-	beignTime, _ := records["begin_time"].(float64)
-	begin := int64(beignTime)
-	endTime, _ := records["end_time"].(float64)
-	end := int64(endTime)
-	planIds, _ := records["plan_ids"].([]interface{})
-
-	if begin <= 0 || end <= 0 || len(planIds) == 0 {
-		response["errorno"] = -3
+	if begin <= 0 || end <= 0 || begin > end || end > time.Now().Unix() || len(planIds) == 0 {
+		response["errorno"] = -2
 		response["msg"] = fmt.Sprintf("Checkin params error! begin:%d end:%d plan_ids:%d", begin, end, len(planIds))
 		return
 	}
@@ -483,15 +476,18 @@ func checkIn(w http.ResponseWriter, req *http.Request) {
 	// convert plan_id from interface{} to int64
 	ids := make([]int64, 0)
 	for _, planId := range planIds {
-		id, _ := planId.(float64)
-		if int64(id) > 0 {
-			ids = append(ids, int64(id))
+		planIdStr, _ := planId.(string)
+		pid, _ := strconv.ParseInt(planIdStr, 10, 64)
+		if pid > 0 {
+			ids = append(ids, pid)
 		}
 	}
 
 	for i := begin; i <= end; i = i + 24*60*60 {
-		for _, plan_id := range ids {
-			insertRecord(uid, plan_id, i)
+		for _, pid := range ids {
+			if _, err := insertRecord(uid, pid, i); err != nil {
+				logger.Println("Insert Record fail:", err.Error())
+			}
 		}
 	}
 
@@ -560,7 +556,7 @@ func sendContentPage(w http.ResponseWriter, userId int64, name string) {
 		UserId int64
 		Name   string
 	}{
-		Time:   time.Now().UTC().Unix(),
+		Time:   time.Now().Unix(),
 		UserId: userId,
 		Name:   name,
 	}
@@ -680,7 +676,7 @@ func insertUser(name string) (userId int64, err error) {
 		return
 	}
 
-	userId, err = common.InsertTable("`tbl_user`", map[string]interface{}{"`name`": name}, nil)
+	userId, err = common.InsertTable("`tbl_user`", map[string]*common.KeyValue{"`name`": &common.KeyValue{"name", name}}, nil)
 	return
 }
 
@@ -690,10 +686,10 @@ func insertPlan(userId int64, content, plan string) (planId int64, err error) {
 		return
 	}
 
-	planId, err = common.InsertTable("`tbl_plans`", map[string]interface{}{
-		"`user_id`": userId,
-		"`content`": content,
-		"`plan`":    plan,
+	planId, err = common.InsertTable("`tbl_plans`", map[string]*common.KeyValue{
+		"`user_id`": &common.KeyValue{"user_id", userId},
+		"`content`": &common.KeyValue{"content", content},
+		"`plan`":    &common.KeyValue{"plan", plan},
 	}, nil)
 	return
 }
@@ -704,12 +700,12 @@ func insertRecord(userId, planId, checkInTime int64) (recordId int64, err error)
 		return
 	}
 
-	recordId, err = common.InsertTable("`tbl_records`", map[string]interface{}{
-		"`user_id`":      userId,
-		"`plan_id`":      planId,
-		"`checkin_time`": fmt.Sprintf("FROM_UNIXTIME(%d)", checkInTime),
+	recordId, err = common.InsertTable("`tbl_records`", map[string]*common.KeyValue{
+		"`user_id`":      &common.KeyValue{"user_id", userId},
+		"`plan_id`":      &common.KeyValue{"plan_id", planId},
+		"`checkin_time`": &common.KeyValue{fmt.Sprintf("FROM_UNIXTIME(%d)", checkInTime), nil},
 	}, map[string]interface{}{
-		"`record_time`": "NOW()",
+		"`record_time`=NOW()": nil,
 	})
 	return
 }

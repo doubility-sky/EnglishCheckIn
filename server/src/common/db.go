@@ -147,18 +147,25 @@ func QueryTable(selects []string, from string, where []*KeyValue, group []string
 	return
 }
 
-func InsertTable(table string, params map[string]interface{}, update map[string]interface{}) (id int64, err error) {
+func InsertTable(table string, params map[string]*KeyValue, update map[string]interface{}) (id int64, err error) {
+	if params == nil {
+		err = errors.New("Insert table must have 'params'!")
+		return
+	}
+
 	columns := make([]string, 0)
 	placeholders := make([]string, 0)
 	updateStatements := make([]string, 0)
 	values := make([]interface{}, 0)
 
-	if params != nil {
-		for k, v := range params {
-			values = append(values, v)
+	for k, v := range params {
+		if v.Value != nil {
+			values = append(values, v.Value)
 			placeholders = append(placeholders, "?")
-			columns = append(columns, k)
+		} else {
+			placeholders = append(placeholders, v.Key)
 		}
+		columns = append(columns, k)
 	}
 
 	if update != nil {
@@ -197,7 +204,7 @@ func InsertTable(table string, params map[string]interface{}, update map[string]
 
 func UpdateTable(table string, update map[string]interface{}, where []*KeyValue) (err error) {
 	if update == nil || len(update) == 0 {
-		err = errors.New("Update table must have 'update' params!")
+		err = errors.New("Update table must have 'update'!")
 		return
 	}
 

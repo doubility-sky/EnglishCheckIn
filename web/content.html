@@ -72,18 +72,22 @@
                 </table>
             </div>
 
-            <div class="center div_block" id="div_plans">
+            <div class="center div_block" id="div_plans" >
                 <div class="div_sub">
                     <h3 id="plans_name">Plans of {{.Name}}</h3>
                 </div>
                 <div class="div_sub">
-                    <table class="center" style="table-layout: fixed;" id="plans" hidden="hidden">
+                    <table class="center" style="table-layout: fixed;" id="plans">
                         <th style="width: 50%;">Name</th>
                         <th style="width: 50%;">Plan</th>
+                        <tr>
+                            <td>听力5篇</td>
+                            <td>每周5次</td>
+                        </tr>
                     </table>
                 </div>
                 <div class="div_sub">
-                    <button class="content_common_btn" id="open_operate_plans" onclick="openModifyPlans();">
+                    <button class="content_common_btn" id="open_modify_plans" onclick="openModifyPlans();">
                         <span class="icon-wrench"></span>
                         <span> Modify  </span>
                     </button>
@@ -103,9 +107,12 @@
             </div>
 
             <!-- middle begin end -->
+
+            <!-- placehoder div -->
+            <div id="div_content_placeholder"></div>
         </div>
     </div>
-
+    
     <!-- footer -->
     <div class="center footer">
         <hr>
@@ -133,52 +140,7 @@
                 <table class="center plan_table" id="modify_plans"> 
                     <th style="width: 40%;">Name</th>
                     <th style="width: 40%;">Plan</th>
-                    <th style="width: 20%">Operate</th>
-                    <tr>
-                        <td>听听听听听听听听听</td>
-                        <td>每周5次</td>
-                        <td>
-                            <button class="plan_btn">
-                                <span class="icon-minus"></span>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                        <td>
-                            <button class="plan_btn">
-                                <span class="icon-minus"></span>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                        <td>
-                            <button class="plan_btn">
-                                <span class="icon-minus"></span>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                        <td>
-                            <button class="plan_btn">
-                                <span class="icon-minus"></span>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                        <td>
-                            <button class="plan_btn">
-                                <span class="icon-minus"></span>
-                            </button>
-                        </td>
-                    </tr>
+                    <th style="width: 20%">modify</th>
                     <tr>
                         <td>听力5篇</td>
                         <td>每周5次</td>
@@ -207,7 +169,7 @@
             <hr class="plan_hr">
 
             <div class="left plans_bottom">
-                <button class="plan_big_btn content_cover_sub_bottom_left" onclick="modifyPlans();" >
+                <button class="plan_big_btn content_cover_sub_bottom_left" onclick="confirmModifyPlans();" >
                     <span class="icon-checkmark"></span>
                     <span> Confirm</span>
                 </button>
@@ -232,59 +194,17 @@
                     <select class="date" id="check_in_date_end"></select>
                 </div>
                 <div class="content_cover_sub_head_right">
-                    <input type="checkbox" class="check_in_box" id="all_selected">All</input>         
+                    <input type="checkbox" class="check_in_box" id="all_selected" onchange="changeAllCheckIn(this.checked);">All</input>         
                 </div>
             </div>
 
             <hr class="plan_hr">
 
             <div class="center plan_scroll">
-                <table class="center plan_table"> 
+                <table class="center plan_table" id="check_in"> 
                     <th style="width: 20%">Select</th>
                     <th style="width: 40%">Name</th>
                     <th style="width: 40%">Plan</th>
-                    <tr>
-                        <td>
-                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
-                        </td>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
-                        </td>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
-                        </td>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
-                        </td>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
-                        </td>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
-                        </td>
-                        <td>听力5篇</td>
-                        <td>每周5次</td>
-                    </tr>
                     <tr>
                         <td>
                             <input type="checkbox" class="check_in_box" name="checkbox" value="checkbox"/>
@@ -298,7 +218,7 @@
             <hr class="plan_hr">
 
             <div class="left plans_bottom">
-                <button class="plan_big_btn content_cover_sub_bottom_left" >
+                <button class="plan_big_btn content_cover_sub_bottom_left" onclick="confirmCheckIn();">
                     <span class="icon-checkmark"></span>
                     <span> Confirm</span>
                 </button>

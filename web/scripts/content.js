@@ -13,6 +13,7 @@ function gotoHome() {
     window.location.href = '/'
 }
 
+// check in function
 function openCheckIn() {
     document.getElementById('div_check_in').hidden = false
 
@@ -35,10 +36,109 @@ function openCheckIn() {
         
     beginSelect.value = _nowDay
     endSelect.value = _nowDay
+
+    // init table
+    var table = document.getElementById('check_in')
+    var tableLen = table.rows.length
+    for (i = 0; i < tableLen - 1; i++)
+    {
+        table.deleteRow(1);
+    }
+
+    for (var i in _userPlans) {
+        var userPlan = _userPlans[i]
+
+        var row = table.insertRow()
+
+        var idCell = row.insertCell(0)
+        idCell.innerHTML = userPlan['plan_id']
+        idCell.hidden = true
+
+        var idCell = row.insertCell(1)
+        idCell.innerHTML = '<input type="checkbox" class="check_in_box" onchange="changeCheckIn(this.checked);"/>'
+        
+        var contentCell = row.insertCell(2)
+        contentCell.setAttribute('class', 'records_table_td')
+        contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+            + '<span>' + userPlan['content'] + '</span></marquee>'
+        var contentMarquee = contentCell.firstChild
+        judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
+
+        var planCell = row.insertCell(3)
+        planCell.setAttribute('class', 'records_table_td')
+        planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+            + '<span>' + userPlan['plan'] + '</span></marquee>'
+        var planMarquee = planCell.firstChild
+        judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
+    }
+
+    document.getElementById('all_selected').checked = true
+    changeAllCheckIn(true)
 }
 
 function closeCheckIn() {
     document.getElementById('div_check_in').hidden = true
+}
+
+function changeAllCheckIn(checked) {
+    var table = document.getElementById('check_in')
+    for (var i = 1; i < table.rows.length; i++) {
+        var tr = table.rows[i]
+        var checkbox = tr.children[1].firstChild
+
+        checkbox.checked = checked
+    }
+}
+
+function changeCheckIn(checked) {
+    if (!checked) {
+        document.getElementById('all_selected').checked = false
+    } else {
+        var allChecked = true
+        var table = document.getElementById('check_in')
+        for (var i = 1; i < table.rows.length; i++) {
+            var tr = table.rows[i]
+            var checkbox = tr.children[1].firstChild
+
+            if (!checkbox.checked) {
+                allChecked = false
+                break
+            }
+        }
+        document.getElementById('all_selected').checked = allChecked
+    }
+}
+
+function confirmCheckIn() {
+    var beginTime = document.getElementById('check_in_date_begin').value
+    var endTime = document.getElementById('check_in_date_end').value
+
+    if (beginTime > _nowDay || endTime > _nowDay) {
+        alert('Date exceed today!')
+        return
+    }
+
+    if (beginTime > endTime) {
+        endTime = beginTime
+    }
+
+    var checkInPlans = new Array()
+
+    var table = document.getElementById('check_in')
+    for (var i = 1; i < table.rows.length; i++) {
+        var tr = table.rows[i]
+        var checkbox = tr.children[1].firstChild
+
+        if (checkbox.checked) {
+            checkInPlans.push(tr.children[0].innerHTML)
+        }
+    }
+
+    if (checkInPlans.length == 0) {
+        closeCheckIn()
+    } else {
+        checkIn(beginTime, endTime, checkInPlans)
+    }
 }
 
 // modify plan function
@@ -63,13 +163,15 @@ function openModifyPlans() {
         
         var contentCell = row.insertCell(1)
         contentCell.setAttribute('class', 'records_table_td')
-        contentCell.innerHTML = '<marquee class="center" scrollamount="10"><span>' + userPlan['content'] + '</span></marquee>'
+        contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+            + '<span>' + userPlan['content'] + '</span></marquee>'
         var contentMarquee = contentCell.firstChild
         judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
 
         var planCell = row.insertCell(2)
         planCell.setAttribute('class', 'records_table_td')
-        planCell.innerHTML = '<marquee class="center" scrollamount="10"><span>' + userPlan['plan'] + '</span></marquee>'
+        planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+            + '<span>' + userPlan['plan'] + '</span></marquee>'
         var planMarquee = planCell.firstChild
         judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
 
@@ -117,6 +219,19 @@ function deletePlan(btn) {
 
 function judgeMarqueeStop(marquee, width, maxWidth) {
     if (width < maxWidth) {
+        marquee.stop();
+        marquee.disabled = true;
+    }
+}
+
+function startMarquee(marquee) {
+    if (!marquee.disabled) {
+        marquee.start()
+    }
+}
+
+function stopMarquee(marquee) {
+    if (!marquee.disabled) {
         marquee.stop()
     }
 }
@@ -134,7 +249,7 @@ function getPlanText(node) {
     return ret.replace(/(^\s*)|(\s*$)/g, "");
 }
 
-function modifyPlans() {
+function confirmModifyPlans() {
     var table = document.getElementById('modify_plans')
     var newPlans = new Array()
 
@@ -338,7 +453,7 @@ function resetRecords(userId, name, date, records) {
 
     // query date
     var queryDate = new Date()
-    queryDate.setTime((parseInt(date) + queryDate.getTimezoneOffset() * 60) * 1000)
+    queryDate.setTime(parseInt(date) * 1000)
     var minDay = 1
     var maxDay = (new Date(queryDate.getFullYear(), queryDate.getMonth() + 1, 0)).getDate()
 
@@ -385,7 +500,7 @@ function resetRecords(userId, name, date, records) {
             var checkinTime = parseInt(oneRecord['checkin_time'])
             if (checkinTime > 0) {
                 var d = new Date()
-                d.setTime((checkinTime + queryDate.getTimezoneOffset() * 60) * 1000)
+                d.setTime(checkinTime * 1000)
                 var day = d.getDate()
                 userPlanObj[planId][day] = true
             }
@@ -524,10 +639,22 @@ function resetPlans(userId, name, plans) {
     if (showObj != undefined && showObj.length > 0) {
         for (var i in showObj) {
             var row = table.insertRow()
-            var contentCell = row.insertCell(0)
-            contentCell.innerHTML = showObj[i]['content']
-            var planCell = row.insertCell(1)
-            planCell.innerHTML = showObj[i]['plan']
+
+            var idCell = row.insertCell(0)
+            idCell.innerHTML = showObj[i]['plan_id']
+            idCell.hidden = true
+
+            var contentCell = row.insertCell(1)
+            contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+                + '<span>' + showObj[i]['content'] + '</span></marquee>'
+            var contentMarquee = contentCell.firstChild
+            judgeMarqueeStop(contentMarquee, contentMarquee.firstChild.offsetWidth, contentCell.offsetWidth)
+
+            var planCell = row.insertCell(2)
+            planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
+                + '<span>' + showObj[i]['plan'] + '</span></marquee>'
+            var planMarquee = planCell.firstChild
+            judgeMarqueeStop(planMarquee, planMarquee.firstChild.offsetWidth, planCell.offsetWidth)
         }
         table.hidden = false
     } else {
@@ -537,13 +664,32 @@ function resetPlans(userId, name, plans) {
     // disable 'modify' button when query user is not _userId
     if (showUserId == _userIdStr) {
         _userPlans = (showObj == undefined) ? new Array() : showObj
-        document.getElementById('open_operate_plans').disabled = false
+        document.getElementById('open_modify_plans').disabled = false
     } else {
-        document.getElementById('open_operate_plans').disabled = true
+        document.getElementById('open_modify_plans').disabled = true
     }
 }
 
 // ajax
+function checkIn(beginDay, endDay, plans) {
+    var begin = parseInt((new Date(_nowY, _nowM, beginDay)).getTime() / 1000)
+    var end = parseInt((new Date(_nowY, _nowM, endDay)).getTime() / 1000)
+
+    var data = new Object()
+    data['user_id'] = _userIdStr
+    data['begin_time'] = begin.toString()
+    data['end_time'] = end.toString()
+    data['plan_ids'] = plans
+
+    var xmlhttp = newXmlhttp()
+    ajaxPost(xmlhttp, '/checkin', JSON.stringify(data), function() {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            closeCheckIn()
+            query()
+        }
+    })
+}
+
 function modify(plans) {
     var data = new Object()
     data['user_id'] = _userIdStr
@@ -567,7 +713,7 @@ function query() {
     var year = document.getElementById('query_year').value
     var month = document.getElementById('query_month').value
     var queryDate = new Date(year, month, 1)
-    var queryUTC = parseInt(queryDate.getTime() / 1000 - queryDate.getTimezoneOffset() * 60)
+    var queryUTC = parseInt(queryDate.getTime() / 1000)
 
     var data = new Object()
     data['user_id'] = uid
@@ -589,11 +735,11 @@ function query() {
 
     // if query all, refresh user list
     if (uid == "0") {
-        getUserList("0")
+        getUserList("0", true)
     }
 }
 
-function getUserList(defaultValue) {
+function getUserList(defaultValue, notQuery) {
     if (defaultValue == undefined) {
         defaultValue = _userId
     }
@@ -618,7 +764,9 @@ function getUserList(defaultValue) {
                 accountSelect.value = defaultValue
 
                 // auto query user self
-                query()
+                if (!notQuery) {
+                    query()                    
+                }
             }
         }
     })
