@@ -162,7 +162,7 @@ select.date {
 
 .div_sub h3 {
 	color: #666666;
-	font-size: 2.5em;
+	font-size: 3em;
 	text-shadow: 1.5px 1.5px 1px rgba(0, 0, 0, 1);
 	margin: 1em 0;
 }
@@ -175,11 +175,11 @@ select.date {
 
 .plans_th {
 	width: 50%;
-	font-size: 2em;
+	font-size: 2.5em;
 }
 
 .plans_table_td {
-	font-size: 2em;
+	font-size: 1.6em;
 }
 
 /* modify plan */
@@ -323,6 +323,15 @@ select.date {
 
 	#div_record {
 		width: 70%;
+	}
+
+
+	.plans_th {
+		font-size: 1.5em;
+	}
+
+	.plans_table_td {
+		font-size: 1em;
 	}
 }
 
