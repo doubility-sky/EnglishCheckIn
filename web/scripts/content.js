@@ -58,7 +58,7 @@ function openCheckIn() {
         idCell.innerHTML = '<input type="checkbox" class="check_in_box" onchange="changeCheckIn(this.checked);"/>'
         
         var contentCell = row.insertCell(2)
-        contentCell.setAttribute('class', 'records_table_td')
+        contentCell.setAttribute('class', 'table_td')
         // contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
         //     + '<span>' + userPlan['content'] + '</span></marquee>'
         // var contentMarquee = contentCell.firstChild
@@ -66,7 +66,7 @@ function openCheckIn() {
         contentCell.innerHTML = userPlan['content']
 
         var planCell = row.insertCell(3)
-        planCell.setAttribute('class', 'records_table_td')
+        planCell.setAttribute('class', 'table_td')
         // planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
         //     + '<span>' + userPlan['plan'] + '</span></marquee>'
         // var planMarquee = planCell.firstChild
@@ -164,7 +164,7 @@ function openModifyPlans() {
         idCell.hidden = true
         
         var contentCell = row.insertCell(1)
-        contentCell.setAttribute('class', 'records_table_td')
+        contentCell.setAttribute('class', 'table_td')
         // contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
         //     + '<span>' + userPlan['content'] + '</span></marquee>'
         // var contentMarquee = contentCell.firstChild
@@ -172,7 +172,7 @@ function openModifyPlans() {
         contentCell.innerHTML = userPlan['content']
 
         var planCell = row.insertCell(2)
-        planCell.setAttribute('class', 'records_table_td')
+        planCell.setAttribute('class', 'table_td')
         // planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
         //     + '<span>' + userPlan['plan'] + '</span></marquee>'
         // var planMarquee = planCell.firstChild
@@ -400,11 +400,11 @@ function createRecordTable(id, data, begin, len) {
         var text
         if (i == -1) {
             text = 'Plan'
-            cell.setAttribute('style', 'width:23%; font-weight: bold;')
+            cell.setAttribute('class', 'records_th_name')
             
         } else {
             text = ('0' + (i + begin)).substr(-2)
-            cell.setAttribute('style', 'width:7%; font-weight: bold;')
+            cell.setAttribute('class', 'records_th_date')
         }
         cell.innerHTML = text
     }
@@ -415,7 +415,7 @@ function createRecordTable(id, data, begin, len) {
         var rowData = data[i]
         for (var j = 0; j < rowData.length; j++) {
             var cell = row.insertCell(j)
-            cell.setAttribute('class', 'records_table_td')
+            cell.setAttribute('class', 'table_td records_table_td')
             cell.innerHTML = rowData[j]
         }
     }
@@ -638,7 +638,7 @@ function resetPlans(userId, name, plans) {
 
     // set name
     if (showUserName != null && showUserName != undefined) {
-        document.getElementById('plans_name').innerHTML = 'Plans of ' + showUserName
+        document.getElementById('plans_name').innerHTML = showUserName
     }
 
     // add new rows
@@ -651,6 +651,7 @@ function resetPlans(userId, name, plans) {
             idCell.hidden = true
 
             var contentCell = row.insertCell(1)
+            contentCell.setAttribute('class', 'table_td plans_table_td')
             // contentCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
             //     + '<span>' + showObj[i]['content'] + '</span></marquee>'
             // var contentMarquee = contentCell.firstChild
@@ -658,6 +659,7 @@ function resetPlans(userId, name, plans) {
             contentCell.innerHTML = showObj[i]['content']
 
             var planCell = row.insertCell(2)
+            planCell.setAttribute('class', 'table_td plans_table_td')
             // planCell.innerHTML = '<marquee class="center" scrollamount="10" onmouseover="stopMarquee(this);" onmouseout="startMarquee(this);">'
             //     + '<span>' + showObj[i]['plan'] + '</span></marquee>'
             // var planMarquee = planCell.firstChild

@@ -5,9 +5,10 @@
 	clear: both;
 }
 
-button.content_common_btn {
-	font-size: 0.75em;
-	margin: 1em auto;
+button.content_btn {
+	display: block;
+	font-size: 1.5em;
+	margin: 2em auto;
 }
 
 .cover_sub h2 {
@@ -69,6 +70,13 @@ select.date {
 	vertical-align: middle;
 }
 
+.table_td {
+    word-break:keep-all;
+    white-space:nowrap;
+	overflow:hidden;
+	text-overflow:ellipsis;
+}
+
 /* head */
 #div_headmenu {
 	position: absolute;
@@ -95,16 +103,6 @@ select.date {
 }
 
 /* query */
-button.query_btn {
-	display: block;
-	font-size: 1em;
-	margin: 2em auto;
-}
-
-.div_block {
-	border: 1px solid;
-	border-color: #c6c6c6 #969696 #555555 #969696;
-}
 
 #div_query {
 	float: left;
@@ -113,18 +111,43 @@ button.query_btn {
 	margin-top: 1em;
 }
 
-#query_account {
-	margin-right: 5%;
+.div_block {
+	border: 1px solid;
+	border-color: #c6c6c6 #969696 #555555 #969696;
+}
+
+#div_query_option_table {
 	width: 100%;
+	table-layout:fixed; 
+	margin-top: 4em;
 }
 
+
+#div_query_user {
+	width: 100%;
+	margin-top: 5em;
+}
+#query_account {
+	font-size: 2em;
+}
+
+#div_query_date {
+	width: 100%;
+	margin-top: 5em;
+}
 #query_year {
-	margin-right: 2%;
+	margin-right: 4%;
+}
+#query_month {
+	margin-left: 4%;
 }
 
-#query_month {
-	margin-right: 5%;
+#div_query_btn_table {
+	width: 100%;
+	table-layout:fixed;
+	margin: 3em 0;
 }
+
 
 /* plans */
 #div_plans {
@@ -137,15 +160,26 @@ button.query_btn {
 	margin: 1em;
 }
 
-#plans_name {
+.div_sub h3 {
 	color: #666666;
-	font-size: 1.5em;
-	text-shadow: 1px 1px 1px rgba(0, 0, 0, 1);
+	font-size: 2.5em;
+	text-shadow: 1.5px 1.5px 1px rgba(0, 0, 0, 1);
+	margin: 1em 0;
 }
 
 #plans {
 	width: 100%;
 	padding: 1px;
+	margin-top: 3em;
+}
+
+.plans_th {
+	width: 50%;
+	font-size: 2em;
+}
+
+.plans_table_td {
+	font-size: 2em;
 }
 
 /* modify plan */
@@ -234,7 +268,7 @@ button.query_btn {
 }
 
 .records_table {
-	border: 1px solid blue;
+	border: 2px solid blue;
 	border-collapse:collapse;
 	color: red;
 	table-layout: fixed;
@@ -242,10 +276,19 @@ button.query_btn {
 }
 
 .records_table_td {
-    word-break:keep-all;
-    white-space:nowrap;
-	overflow:hidden;
-	text-overflow:ellipsis;
+	font-size: 1.2em;
+}
+
+.records_th_name {
+	width:23%;
+	font-weight: bold;
+	font-size: 1.5em;
+}
+
+.records_th_date {
+	width:7%;
+	font-weight: bold;
+	font-size: 1.5em;
 }
 
 .records_name {
