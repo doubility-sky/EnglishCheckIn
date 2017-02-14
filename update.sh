@@ -30,7 +30,7 @@ scp run.sh stop.sh mysqlbackup.sh ${REMOTE}:/home/projects/ec/
 
 # server files. compile linux web server
 mv server/bin/eci server/eci_bk
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install eci
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server/bin/eci eci
 scp -r server/bin server/config ${REMOTE}:/home/projects/ec/server/
 mv server/eci_bk server/bin/eci
 
