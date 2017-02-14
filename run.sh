@@ -8,4 +8,4 @@ sh stop.sh
 screen -dmS ec
 sleep 0.1
 
-screen -S ec -X eval "screen" "stuff './server/bin/main \n'"
+screen -S ec -X eval "screen" "stuff './server/bin/eci \n'"
