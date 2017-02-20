@@ -2,8 +2,8 @@
 package http_server
 
 import (
-	"eci/lib/common"
 	"database/sql"
+	"eci/lib/common"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,7 +41,7 @@ func initPages() {
 }
 
 func initUserNumber() {
-	results, err := common.QueryTable([]string{"count(1)"}, "`tbl_user`", nil, nil, "", nil)
+	results, err := common.QueryTable([]string{"count(1)"}, "`tbl_user`", nil, nil, "", nil, "")
 	if err == nil && results.Next() {
 		results.Scan(&userNumber)
 		logger.Println(fmt.Sprintf("User Number is %d.", userNumber))
@@ -413,8 +413,21 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 		planId, _ := p["plan_id"].(string)
 		pid, _ := strconv.ParseInt(planId, 10, 64)
 		if pid > 0 {
-			if e := deletePlan(uid, pid); e != nil {
-				logger.Println("Update plan fail:", e.Error())
+			// if this plan has not any record, delete it, otherwise update it's end_time
+			results, e := queryPlanHasRecord(uid, pid)
+			if e != nil {
+				logger.Println("Query plan has record fail:", e.Error())
+				continue
+			}
+
+			if results.Next() {
+				if e := invalidatePlan(uid, pid); e != nil {
+					logger.Println("Inva plan fail:", e.Error())
+				}
+			} else {
+				if e := deletePlan(uid, pid); e != nil {
+					logger.Println("Delete plan fail:", e.Error())
+				}
 			}
 		} else {
 			content, _ := p["content"].(string)
@@ -627,7 +640,7 @@ func queryUser(userId int64) (results *sql.Rows, err error) {
 	if userId > 0 {
 		where = append(where, &common.KeyValue{"`user_id`", userId})
 	}
-	results, err = common.QueryTable([]string{"`user_id`, `name`"}, "`tbl_user`", where, nil, "", []string{"`user_id`"})
+	results, err = common.QueryTable([]string{"`user_id`, `name`"}, "`tbl_user`", where, nil, "", []string{"`user_id`"}, "")
 
 	return
 }
@@ -641,7 +654,7 @@ func queryPlans(userId int64) (results *sql.Rows, err error) {
 
 	results, err = common.QueryTable([]string{"a.`user_id`", "b.`name`", "a.`plan_id`", "a.`content`", "a.`plan`"},
 		"`tbl_plans` a LEFT JOIN `tbl_user` b ON a.`user_id` = b.`user_id`", where, nil, "",
-		[]string{"a.`user_id`", "a.`plan_id`"})
+		[]string{"a.`user_id`", "a.`plan_id`"}, "")
 	return
 }
 
@@ -666,7 +679,22 @@ func queryRecords(userId, beginTime, endTime int64) (results *sql.Rows, err erro
 			"IFNULL(UNIX_TIMESTAMP(c.`record_time`), 0) as `record_time`"},
 		"`tbl_plans` a LEFT JOIN `tbl_user` b ON a.`user_id` = b.`user_id` LEFT JOIN `tbl_records` c ON a.`user_id` = c.`user_id` AND a.`plan_id` = c.`plan_id`",
 		where, nil, "",
-		[]string{"a.`user_id`", "a.`plan_id`", "c.`checkin_time`"})
+		[]string{"a.`user_id`", "a.`plan_id`", "c.`checkin_time`"}, "")
+	return
+}
+
+func queryPlanHasRecord(userId, planId int64) (results *sql.Rows, err error) {
+	if userId <= 0 || planId <= 0 {
+		err = errors.New(fmt.Sprintf("queryPlanHasRecord params error! userId:%d; planId:%d; ", userId, planId))
+		return
+	}
+
+	results, err = common.QueryTable([]string{"1"}, "`tbl_records`",
+		[]*common.KeyValue{
+			&common.KeyValue{"user_id", userId},
+			&common.KeyValue{"plan_id", planId},
+		},
+		nil, "", nil, "limit 1")
 	return
 }
 
@@ -710,13 +738,27 @@ func insertRecord(userId, planId, checkInTime int64) (recordId int64, err error)
 	return
 }
 
+func invalidatePlan(userId, planId int64) (err error) {
+	if userId <= 0 || planId <= 0 {
+		err = errors.New(fmt.Sprintf("invalidatePlan params error! userId:%d; planId:%d; ", userId, planId))
+		return
+	}
+
+	err = common.UpdateTable("`tbl_plans`", map[string]interface{}{"`end_time`=DATE_SUB(NOW(), INTERVAL 1 SECOND)": nil},
+		[]*common.KeyValue{
+			&common.KeyValue{"plan_id", planId},
+			&common.KeyValue{"user_id", userId},
+		})
+	return
+}
+
 func deletePlan(userId, planId int64) (err error) {
 	if userId <= 0 || planId <= 0 {
 		err = errors.New(fmt.Sprintf("deletePlan params error! userId:%d; planId:%d; ", userId, planId))
 		return
 	}
 
-	err = common.UpdateTable("`tbl_plans`", map[string]interface{}{"`end_time`=DATE_SUB(NOW(), INTERVAL 1 SECOND)": nil},
+	err = common.DeleteTable("`tbl_plans`",
 		[]*common.KeyValue{
 			&common.KeyValue{"plan_id", planId},
 			&common.KeyValue{"user_id", userId},

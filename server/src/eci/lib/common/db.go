@@ -100,7 +100,7 @@ func prepare(querySql string) (stmt *sql.Stmt, err error) {
 
 // sql wrapper
 func QueryTable(selects []string, from string, where []*KeyValue, group []string, 
-				having string, order []string) (results *sql.Rows, err error) {
+				having string, order []string, other string) (results *sql.Rows, err error) {
 	whereStatements := make([]string, 0)
 	values := make([]interface{}, 0)
 
@@ -132,9 +132,8 @@ func QueryTable(selects []string, from string, where []*KeyValue, group []string
 		orderStr = fmt.Sprintf("ORDER BY %s", strings.Join(order, ","))
 	}
 
-	querySql := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s;",
-		strings.Join(selects, ","), from, whereStr, groupStr, havingStr, orderStr)
-
+	querySql := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s %s;",
+		strings.Join(selects, ","), from, whereStr, groupStr, havingStr, orderStr, other)
 	if Debug {
 		logger.Println("SQL:", fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...))
 	}
@@ -186,7 +185,6 @@ func InsertTable(table string, params map[string]*KeyValue, update map[string]in
 
 	querySql := fmt.Sprintf("INSERT INTO %s(%s) VALUES(%s) %s;",
 		table, strings.Join(columns, ","), strings.Join(placeholders, ","), updateStr)
-
 	if Debug {
 		logger.Println("SQL:", fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...))
 	}
@@ -202,9 +200,14 @@ func InsertTable(table string, params map[string]*KeyValue, update map[string]in
 	return
 }
 
+// If be sure to update all table, please use 'where true' explicitly
 func UpdateTable(table string, update map[string]interface{}, where []*KeyValue) (err error) {
 	if update == nil || len(update) == 0 {
 		err = errors.New("Update table must have 'update'!")
+		return
+	}
+	if where == nil || len(where) == 0 {
+		err = errors.New("Update table must have 'where'!")
 		return
 	}
 
@@ -238,7 +241,6 @@ func UpdateTable(table string, update map[string]interface{}, where []*KeyValue)
 	}
 
 	querySql := fmt.Sprintf("UPDATE %s SET %s %s;", table, strings.Join(updateStatements, ","), whereStr)
-
 	if Debug {
 		logger.Println("SQL:", fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...))
 	}
@@ -249,6 +251,48 @@ func UpdateTable(table string, update map[string]interface{}, where []*KeyValue)
 	} else if rows, _ := result.RowsAffected(); rows == 0 {
 		sql := fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...)
 		err = errors.New(fmt.Sprintf("Update table no row affected. sql: %s", sql))
+	}
+
+	return
+}
+
+// If be sure to delete all table, please use 'where true' explicitly
+func DeleteTable(table string, where []*KeyValue) (err error) {
+	if where == nil || len(where) == 0 {
+		err = errors.New("Delete table must have 'where'!")
+		return
+	}
+
+	whereStatements := make([]string, 0)
+	values := make([]interface{}, 0)
+
+	if where != nil {
+		for _, v := range where {
+			if v.Value != nil {
+				values = append(values, v.Value)
+				whereStatements = append(whereStatements, fmt.Sprintf("%s=?", v.Key))
+			} else {
+				whereStatements = append(whereStatements, v.Key)
+			}
+		}
+	}
+
+	var whereStr string
+	if len(whereStatements) > 0 {
+		whereStr = fmt.Sprintf("WHERE %s", strings.Join(whereStatements, " and "))
+	}
+
+	querySql := fmt.Sprintf("DELETE FROM %s %s;", table, whereStr)
+	if Debug {
+		logger.Println("SQL:", fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...))
+	}
+
+	if result, e := Exec(querySql, values...); e != nil {
+		sql := fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...)
+		err = errors.New(fmt.Sprintf("DELETE table error: %s. sql: %s", e.Error(), sql))
+	} else if rows, _ := result.RowsAffected(); rows == 0 {
+		sql := fmt.Sprintf(strings.Replace(querySql, "?", "%v", -1), values...)
+		err = errors.New(fmt.Sprintf("DELETE table no row affected. sql: %s", sql))
 	}
 
 	return
