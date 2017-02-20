@@ -5,7 +5,7 @@ cd $path
 
 sh stop.sh
 
-screen -dmS ec
+screen -dmS eci
 sleep 0.1
 
-screen -S ec -X eval "screen" "stuff './server/bin/eci \n'"
+screen -S eci -X eval "screen" "stuff './server/bin/eci \n'"

@@ -11,27 +11,27 @@ fi
 echo "REMOTE addr:"${REMOTE}
 
 # rm files
-ssh ${REMOTE} 'rm -rf /home/projects/ec/server/*'
-ssh ${REMOTE} 'rm -rf /home/projects/ec/web/*'
+ssh ${REMOTE} 'rm -rf /home/projects/eci/server/*'
+ssh ${REMOTE} 'rm -rf /home/projects/eci/web/*'
 
 # mkdir
-ssh ${REMOTE} 'mkdir -p /home/projects/ec/mysqlbackup'
-ssh ${REMOTE} 'mkdir -p /home/projects/ec/server'
-ssh ${REMOTE} 'mkdir -p /home/projects/ec/server/logs'
-ssh ${REMOTE} 'mkdir -p /home/projects/ec/web'
+ssh ${REMOTE} 'mkdir -p /home/projects/eci/mysqlbackup'
+ssh ${REMOTE} 'mkdir -p /home/projects/eci/server'
+ssh ${REMOTE} 'mkdir -p /home/projects/eci/server/logs'
+ssh ${REMOTE} 'mkdir -p /home/projects/eci/web'
 
 
 # cp files
 shopt -s extglob
 
 # web files
-scp -r web/* ${REMOTE}:/home/projects/ec/web/
-scp run.sh stop.sh mysqlbackup.sh ${REMOTE}:/home/projects/ec/
+scp -r web/* ${REMOTE}:/home/projects/eci/web/
+scp run.sh stop.sh mysqlbackup.sh ${REMOTE}:/home/projects/eci/
 
 # server files. compile linux web server
 mv server/bin/eci server/eci_bk
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server/bin/eci eci
-scp -r server/bin server/config ${REMOTE}:/home/projects/ec/server/
+scp -r server/bin server/config ${REMOTE}:/home/projects/eci/server/
 mv server/eci_bk server/bin/eci
 
 shopt -u extglob

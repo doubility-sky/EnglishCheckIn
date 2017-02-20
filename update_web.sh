@@ -11,19 +11,19 @@ fi
 echo "REMOTE addr:"${REMOTE}
 
 # rm files
-ssh ${REMOTE} 'rm -rf /home/projects/ec/web/*'
+ssh ${REMOTE} 'rm -rf /home/projects/eci/web/*'
 
 # mkdir
-ssh ${REMOTE} 'mkdir -p /home/projects/ec/mysqlbackup'
-ssh ${REMOTE} 'mkdir -p /home/projects/ec/server'
-ssh ${REMOTE} 'mkdir -p /home/projects/ec/server/logs'
-ssh ${REMOTE} 'mkdir -p /home/projects/ec/web'
+ssh ${REMOTE} 'mkdir -p /home/projects/eci/mysqlbackup'
+ssh ${REMOTE} 'mkdir -p /home/projects/eci/server'
+ssh ${REMOTE} 'mkdir -p /home/projects/eci/server/logs'
+ssh ${REMOTE} 'mkdir -p /home/projects/eci/web'
 
 
 # cp files
 shopt -s extglob
 
 # web files
-scp -r web/* ${REMOTE}:/home/projects/ec/web/
+scp -r web/* ${REMOTE}:/home/projects/eci/web/
 
 shopt -u extglob
