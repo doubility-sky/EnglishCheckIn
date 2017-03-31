@@ -722,13 +722,20 @@ function query() {
 
     var year = document.getElementById('query_year').value
     var month = document.getElementById('query_month').value
-    var queryDate = new Date(year, month, 1)
-    var queryUTC = parseInt(queryDate.getTime() / 1000)
+    
+    var queryBegin = new Date(year, month, 1)
+    var queryBeginUTC = parseInt(queryBegin.getTime() / 1000)
+    
+    var queryEnd = new Date(year,month,1)
+    queryEnd.setMonth(queryEnd.getMonth() + 1)
+
+    var queryEndUTC = parseInt(queryEnd.getTime() / 1000 - 1)
 
     var data = new Object()
     data['user_id'] = uid
     data['name'] = name
-    data['date'] = queryUTC.toString()
+    data['begin'] = queryBeginUTC.toString()
+    data['end'] = queryEndUTC.toString()
 
     var xmlhttp = newXmlhttp()
     ajaxPost(xmlhttp, '/query', JSON.stringify(data), function() {
@@ -738,7 +745,7 @@ function query() {
                 alert(obj.msg)
             } else {
                 resetPlans(obj.user_id, obj.name, obj.plans)
-                resetRecords(obj.user_id, obj.name, obj.date, obj.records)
+                resetRecords(obj.user_id, obj.name, obj.begin, obj.records)
             }
         }
     })

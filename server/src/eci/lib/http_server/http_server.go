@@ -273,12 +273,15 @@ func query(w http.ResponseWriter, req *http.Request) {
 
 	name, _ := values["name"].(string)
 
-	date, _ := values["date"].(string)
-	beginTime, _ := strconv.ParseInt(date, 10, 64)
+	begin, _ := values["begin"].(string)
+	beginTime, _ := strconv.ParseInt(begin, 10, 64)
+	end, _ := values["end"].(string)
+	endTime, _ := strconv.ParseInt(end, 10, 64)
 
 	response["user_id"] = userId
 	response["name"] = name
-	response["date"] = date
+	response["begin"] = begin
+	response["end"] = end
 
 	// uid = 0 means only query all users' data.
 	// query plans. TODO: client not support query all users' plans.
@@ -320,11 +323,10 @@ func query(w http.ResponseWriter, req *http.Request) {
 	response["plans"] = responsePlans
 
 	// query records
-	if beginTime <= 0 {
+	if beginTime <= 0 || endTime < beginTime {
 		response["errorno"] = 0
 		return
 	}
-	endTime := time.Unix(beginTime, 0).AddDate(0, 1, 0).Unix() - 1
 
 	records, err := queryRecords(uid, beginTime, endTime)
 	if err != nil {
