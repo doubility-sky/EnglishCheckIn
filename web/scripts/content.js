@@ -139,7 +139,25 @@ function confirmCheckIn() {
     if (checkInPlans.length == 0) {
         closeCheckIn()
     } else {
-        checkIn(beginTime, endTime, checkInPlans)
+        checkIn(beginTime, endTime, checkInPlans, 'false', function() {
+            closeCheckIn()
+            query()
+        })
+    }
+}
+
+function singleCheckIn(btn, planId, day) {
+    var plans = new Array()
+    plans.push(planId.toString())
+
+    if (btn.innerHTML == '') {
+        checkIn(day, day, plans, 'false', function() {
+            btn.innerHTML = '&radic;'
+        })
+    } else {
+        checkIn(day, day, plans, 'true', function() {
+            btn.innerHTML = ''
+        })
     }
 }
 
@@ -385,7 +403,7 @@ function clickDownload(aLink) {
 }
 
 // query function
-function createRecordTable(id, data, begin, len) {
+function createRecordTable(id, data, begin, len, isModify) {
     var table = document.createElement('table')
     table.id = id
     table.setAttribute('class', 'records_table')
@@ -413,10 +431,15 @@ function createRecordTable(id, data, begin, len) {
         var row = table.insertRow()
 
         var rowData = data[i]
-        for (var j = 0; j < rowData.length; j++) {
+        var planId = rowData[0]
+
+        for (var j = 0; j < rowData.length - 1; j++) {
             var cell = row.insertCell(j)
             cell.setAttribute('class', 'table_td records_table_td')
-            cell.innerHTML = rowData[j]
+            cell.innerHTML = rowData[j + 1]
+            if (j > 0 && isModify) {
+                cell.setAttribute('onclick', 'singleCheckIn(this,' + planId + ',' + (j - 1 + begin) + ')')
+            }
         }
     }
 
@@ -520,18 +543,21 @@ function resetRecords(userId, name, date, records) {
 
         var showUser = new Object()
 
+        var uid = key.split(',')[0]
+        showUser['uid'] = uid
         var userName = key.split(',')[1]
         showUser['name'] = userName
 
         var showRecord = new Array()
         var noRecord = true
 
-        for (var planId in userPlanObj) {
+        for (var planId in userPlanObj) {            
             var planSet = userPlanObj[planId]
 
             var onePlanRecord = new Array()
 
             var planName = planSet['content']
+            onePlanRecord.push(planId)
             onePlanRecord.push(planName)
 
             for (var j = minDay; j <= maxDay; j++) {
@@ -580,7 +606,7 @@ function resetRecords(userId, name, date, records) {
                 for (var j in showRecord) {
                     var onePlanRecord = showRecord[j]
 
-                    var onePart = onePlanRecord.slice(0, 1).concat(onePlanRecord.slice(begin, begin + len))
+                    var onePart = onePlanRecord.slice(0, 2).concat(onePlanRecord.slice(begin + 1, begin + len + 1))
                     partRecord.push(onePart)
                 }
 
@@ -588,7 +614,8 @@ function resetRecords(userId, name, date, records) {
                 tableNumber += 1
                 tableIds.push(tbId)
 
-                var tb = createRecordTable(tbId, partRecord, begin, len)
+                var isModify = (showUser['uid'] == _userId) && (queryDate.getFullYear() == _nowY) && (queryDate.getMonth() == _nowM)
+                var tb = createRecordTable(tbId, partRecord, begin, len, isModify)
                 divRecordSub.appendChild(tb)
             }
             _recordTableIds.push({
@@ -681,7 +708,7 @@ function resetPlans(userId, name, plans) {
 }
 
 // ajax
-function checkIn(beginDay, endDay, plans) {
+function checkIn(beginDay, endDay, plans, isCancel, callback) {
     var begin = parseInt((new Date(_nowY, _nowM, beginDay)).getTime() / 1000)
     var end = parseInt((new Date(_nowY, _nowM, endDay)).getTime() / 1000)
 
@@ -690,12 +717,15 @@ function checkIn(beginDay, endDay, plans) {
     data['begin_time'] = begin.toString()
     data['end_time'] = end.toString()
     data['plan_ids'] = plans
+    data['delete'] = isCancel
 
     var xmlhttp = newXmlhttp()
     ajaxPost(xmlhttp, '/checkin', JSON.stringify(data), function() {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-            closeCheckIn()
-            query()
+            var obj = JSON.parse(xmlhttp.responseText)
+            if (obj.errorno == 0 && callback != null) {
+                callback()
+            }
         }
     })
 }

@@ -268,6 +268,8 @@ func query(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, msg)
 	}()
 
+	response["errorno"] = 0
+
 	userId, _ := values["user_id"].(string)
 	uid, _ := strconv.ParseInt(userId, 10, 64)
 
@@ -366,9 +368,6 @@ func query(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	response["records"] = responseRecords
-
-	// success
-	response["errorno"] = 0
 }
 
 func modifyPlans(w http.ResponseWriter, req *http.Request) {
@@ -390,6 +389,8 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 		logger.Println(msg)
 		io.WriteString(w, msg)
 	}()
+
+	response["errorno"] = 0
 
 	userId, _ := values["user_id"].(string)
 	uid, _ := strconv.ParseInt(userId, 10, 64)
@@ -444,8 +445,6 @@ func modifyPlans(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
-
-	response["errorno"] = 0
 }
 
 func checkIn(w http.ResponseWriter, req *http.Request) {
@@ -468,6 +467,8 @@ func checkIn(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, msg)
 	}()
 
+	response["errorno"] = 0
+
 	userId, _ := values["user_id"].(string)
 	uid, _ := strconv.ParseInt(userId, 10, 64)
 	if uid <= 0 {
@@ -481,6 +482,7 @@ func checkIn(w http.ResponseWriter, req *http.Request) {
 	endTime, _ := values["end_time"].(string)
 	end, _ := strconv.ParseInt(endTime, 10, 64)
 	planIds, _ := values["plan_ids"].([]interface{})
+	isDelete := values["delete"].(string)
 
 	if begin <= 0 || end <= 0 || begin > end || end > time.Now().Unix() || len(planIds) == 0 {
 		response["errorno"] = -2
@@ -500,13 +502,22 @@ func checkIn(w http.ResponseWriter, req *http.Request) {
 
 	for i := begin; i <= end; i = i + 24*60*60 {
 		for _, pid := range ids {
-			if _, err := insertRecord(uid, pid, i); err != nil {
-				logger.Println("Insert Record fail:", err.Error())
+			response["errorno"] = -3
+			if isDelete == "true" {
+				if _, err := deleteRecord(uid, pid, i); err != nil {
+					logger.Println("Delete Record fail:", err.Error())
+				} else {
+					response["errorno"] = 0
+				}
+			} else {
+				if _, err := insertRecord(uid, pid, i); err != nil {
+					logger.Println("Insert Record fail:", err.Error())
+				} else {
+					response["errorno"] = 0
+				}
 			}
 		}
 	}
-
-	response["errorno"] = 0
 }
 
 func userList(w http.ResponseWriter, req *http.Request) {
@@ -528,6 +539,8 @@ func userList(w http.ResponseWriter, req *http.Request) {
 		logger.Println(msg)
 		io.WriteString(w, msg)
 	}()
+
+	response["errorno"] = 0
 
 	results, err := queryUser(0)
 	if err != nil {
@@ -551,8 +564,6 @@ func userList(w http.ResponseWriter, req *http.Request) {
 		})
 	}
 	response["data"] = data
-
-	response["errorno"] = 0
 }
 
 func sendIndexPage(w http.ResponseWriter) {
@@ -763,6 +774,21 @@ func deletePlan(userId, planId int64) (err error) {
 	err = common.DeleteTable("`tbl_plans`",
 		[]*common.KeyValue{
 			&common.KeyValue{"plan_id", planId},
+			&common.KeyValue{"user_id", userId},
+		})
+	return
+}
+
+func deleteRecord(userId, planId, checkInTime int64) (recordId int64, err error) {
+	if userId <= 0 || planId <= 0 || checkInTime <= 0 {
+		err = errors.New(fmt.Sprintf("deleteRecord params error! userId:%d; planId:%d; checkInTime:%d;", userId, planId, checkInTime))
+		return
+	}
+
+	err = common.DeleteTable("`tbl_records`",
+		[]*common.KeyValue{
+			&common.KeyValue{"plan_id", planId},
+			&common.KeyValue{fmt.Sprintf("`checkin_time`=FROM_UNIXTIME(%d)", checkInTime), nil},
 			&common.KeyValue{"user_id", userId},
 		})
 	return
