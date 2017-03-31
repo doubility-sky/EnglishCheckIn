@@ -142,7 +142,7 @@ function confirmCheckIn() {
         checkIn(beginTime, endTime, checkInPlans, 'false', function() {
             closeCheckIn()
             query()
-        })
+        }, true)
     }
 }
 
@@ -153,11 +153,11 @@ function singleCheckIn(btn, planId, day) {
     if (btn.innerHTML == '') {
         checkIn(day, day, plans, 'false', function() {
             btn.innerHTML = '&radic;'
-        })
+        }, false)
     } else {
         checkIn(day, day, plans, 'true', function() {
             btn.innerHTML = ''
-        })
+        }, false)
     }
 }
 
@@ -467,6 +467,8 @@ function createRecordSplit() {
 }
 
 function resetRecords(userId, name, date, records) {
+    _recordTableIds = new Array()
+
     var divRecord = document.getElementById('div_record')
     if (records == undefined) {
         divPlans.hidden = true
@@ -580,7 +582,6 @@ function resetRecords(userId, name, date, records) {
     }
 
     // split array to show data, create table and show it.
-    _recordTableIds = new Array()
     _recordTableIds.push({
         'date': queryDate
     })
@@ -614,7 +615,8 @@ function resetRecords(userId, name, date, records) {
                 tableNumber += 1
                 tableIds.push(tbId)
 
-                var isModify = (showUser['uid'] == _userId) && (queryDate.getFullYear() == _nowY) && (queryDate.getMonth() == _nowM)
+                // var isModify = (showUser['uid'] == _userId) && (queryDate.getFullYear() == _nowY) && (queryDate.getMonth() == _nowM)
+                var isModify = (showUser['uid'] == _userId)
                 var tb = createRecordTable(tbId, partRecord, begin, len, isModify)
                 divRecordSub.appendChild(tb)
             }
@@ -708,9 +710,21 @@ function resetPlans(userId, name, plans) {
 }
 
 // ajax
-function checkIn(beginDay, endDay, plans, isCancel, callback) {
-    var begin = parseInt((new Date(_nowY, _nowM, beginDay)).getTime() / 1000)
-    var end = parseInt((new Date(_nowY, _nowM, endDay)).getTime() / 1000)
+function checkIn(beginDay, endDay, plans, isCancel, callback, isCurrent) {
+    // var begin = parseInt((new Date(_nowY, _nowM, beginDay)).getTime() / 1000)
+    // var end = parseInt((new Date(_nowY, _nowM, endDay)).getTime() / 1000)
+    var begin, end
+    var year, month
+    if (!isCurrent && _recordTableIds.length > 0) {
+        var date = _recordTableIds[0].date
+        year = date.getFullYear()
+        month = date.getMonth()
+    } else {
+        year = _nowY
+        month = _nowM
+    }
+    var begin = parseInt((new Date(year, month, beginDay)).getTime() / 1000)
+    var end = parseInt((new Date(year, month, endDay)).getTime() / 1000)
 
     var data = new Object()
     data['user_id'] = _userIdStr
