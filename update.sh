@@ -1,6 +1,8 @@
 #!/bin/sh
 
-# jn is Loading privte shortcut
+path=$(cd "$(dirname "$0")"; pwd)
+echo $path
+
 if [ "$1" != "" ]; then
     REMOTE=$1
 else
@@ -30,8 +32,12 @@ scp run.sh stop.sh mysqlbackup.sh ${REMOTE}:/home/projects/eci/
 
 # server files. compile linux web server
 mv server/bin/eci server/eci_bk
+
+export GOPATH=${path}/server
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server/bin/eci eci
+
 scp -r server/bin server/config ${REMOTE}:/home/projects/eci/server/
+
 mv server/eci_bk server/bin/eci
 
 shopt -u extglob
