@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"os"
 	// "os"
 	//"io/ioutil"
 	"regexp"
@@ -33,6 +34,12 @@ var (
 	// pages          = map[string]*template.Template{}
 	COOKIE_MAX_AGE = int(time.Hour * 24 * 3 / time.Second) //3天
 	userNumber     int64
+
+	checkJsTime time.Time
+	checkJsInterval = time.Minute * 5
+	commonJsTime int64
+	loginJsTime int64
+	contentJsTime int64
 )
 
 func initPages() {
@@ -45,6 +52,33 @@ func initUserNumber() {
 	if err == nil && results.Next() {
 		results.Scan(&userNumber)
 		logger.Println(fmt.Sprintf("User Number is %d.", userNumber))
+	}
+}
+
+func getJsTime(filename string) int64 {
+	if checkJsTime.Add(checkJsInterval).Before(time.Now()) {
+		checkJsTime = time.Now()
+
+		commonJs, _ := os.Lstat(rootPath + "/scripts/common.js")
+		commonJsTime = commonJs.ModTime().Unix()
+
+		loginJs, _ := os.Lstat(rootPath + "/scripts/login.js")
+		loginJsTime = loginJs.ModTime().Unix()
+
+		contentJs, _ := os.Lstat(rootPath + "/scripts/content.js")
+		contentJsTime = contentJs.ModTime().Unix()
+	}
+
+	logger.Println(commonJsTime, loginJsTime, contentJsTime)
+	switch filename {
+		case "common" :
+			return commonJsTime
+		case "login" :
+			return loginJsTime
+		case "content" :
+			return contentJsTime
+		default :
+			return 0
 	}
 }
 
@@ -569,8 +603,16 @@ func userList(w http.ResponseWriter, req *http.Request) {
 func sendIndexPage(w http.ResponseWriter) {
 	// var html = pages["index"]
 	var html, _ = template.ParseFiles(rootPath + "/index.html")
+	
+	data := struct {
+		CommonJsTime   int64
+		LoginJsTime    int64
+	}{
+		CommonJsTime:  getJsTime("common"),
+		LoginJsTime:  getJsTime("login"),
+	}
 
-	html.Execute(w, nil)
+	html.Execute(w, data)
 }
 
 func sendContentPage(w http.ResponseWriter, userId int64, name string) {
@@ -581,12 +623,16 @@ func sendContentPage(w http.ResponseWriter, userId int64, name string) {
 		Time   int64
 		UserId int64
 		Name   string
+		CommonJsTime   int64
+		ContentJsTime  int64
 	}{
 		Time:   time.Now().Unix(),
 		UserId: userId,
 		Name:   name,
+		CommonJsTime:   getJsTime("common"),
+		ContentJsTime:  getJsTime("content"),
 	}
-	// html.Execute(os.Stdout, data)
+
 	html.Execute(w, data)
 }
 
