@@ -69,7 +69,6 @@ func getJsTime(filename string) int64 {
 		contentJsTime = contentJs.ModTime().Unix()
 	}
 
-	logger.Println(commonJsTime, loginJsTime, contentJsTime)
 	switch filename {
 		case "common" :
 			return commonJsTime
